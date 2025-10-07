@@ -1,5 +1,5 @@
 ## Hi there 👋
-
+반갑습니다.
 <!--
 **bigstar3-gb/bigstar3-gb** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
