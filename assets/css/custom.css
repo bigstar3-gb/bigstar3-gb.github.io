@@ -1,33 +1,33 @@
 .page-header {
-  background: none;
-  padding: 0;
-  text-align: center;
-  margin-bottom: 0;
+  background: none !important;
+  padding: 0 !important;
+  text-align: center !important;
+  margin-bottom: 0 !important;
 }
 
 .page-header::before {
   content: "";
   display: block;
-  background-image: url("/assets/images/header.jpg");
-  background-repeat: no-repeat;
-  background-position: center top;
-  background-size: auto;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 966 / 330;
-  margin-bottom: 0;
+  background-image: url("/assets/images/header.jpg") !important;
+  background-repeat: no-repeat !important;
+  background-position: center top !important;
+  background-size: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  aspect-ratio: 966 / 330 !important;
+  margin-bottom: 0 !important;
 }
 
-/* 헤더 아래 여백 제거 */
+/* 헤더와 본문 사이 여백 완전히 제거 */
 .main-content {
   margin-top: 0 !important;
-  padding-top: 10px !important; /* 너무 붙지 않게 살짝 띄움 */
+  padding-top: 0 !important;
 }
 
-/* 제목 위치 보정 */
+/* 텍스트 위치 조정 */
 .project-name, .project-tagline {
-  position: relative;
-  top: -20px;
-  color: #fff;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+  position: relative !important;
+  top: -10px !important;
+  color: #fff !important;
+  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8) !important;
 }
