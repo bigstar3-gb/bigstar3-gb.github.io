@@ -1,7 +1,8 @@
 .page-header {
-  background: none; /* 기본 파란 배경 제거 */
-  padding: 0;       /* Cayman 기본 여백 제거 */
+  background: none;
+  padding: 0;
   text-align: center;
+  margin-bottom: 0;
 }
 
 .page-header::before {
@@ -10,17 +11,23 @@
   background-image: url("/assets/images/header.jpg");
   background-repeat: no-repeat;
   background-position: center top;
-  background-size: auto;          /* 원본 크기 유지 */
+  background-size: auto;
   width: 100%;
   height: auto;
-  aspect-ratio: 966 / 330;        /* 주인님 이미지 비율로 계산됨 */
+  aspect-ratio: 966 / 330;
+  margin-bottom: 0;
 }
 
-/* 헤더 텍스트(국단비정보센터) 위치 조정 */
+/* 헤더 아래 여백 제거 */
+.main-content {
+  margin-top: 0 !important;
+  padding-top: 10px !important; /* 너무 붙지 않게 살짝 띄움 */
+}
+
+/* 제목 위치 보정 */
 .project-name, .project-tagline {
   position: relative;
-  top: -40px;      /* 텍스트를 살짝 위로 */
+  top: -20px;
   color: #fff;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
-
