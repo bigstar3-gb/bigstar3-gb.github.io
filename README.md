@@ -11,5 +11,5 @@
 - [GitHub: bigstar3-gb](https://github.com/bigstar3-gb)
 
 ## Contact
-- ["국단비정보센터 블로그"] (https://blog.naver.com/bigstar33333)
-- ["국단비1분천자문 유튜브"] (https://www.youtube.com/@bigstar333)
+- [국단비정보센터 블로그](https://blog.naver.com/bigstar33333)
+- [국단비1분천자문 유튜브](https://www.youtube.com/@bigstar333)
