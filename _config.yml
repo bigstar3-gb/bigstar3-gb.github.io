@@ -1,4 +1,5 @@
 theme: jekyll-theme-cayman
 title: 국단비정보센터(이원화)
 description: 간단한 소개 + 링크 허브
-
+include:
+  - assets/css/custom.css
