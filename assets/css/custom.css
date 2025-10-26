@@ -1,8 +1,10 @@
+/* 헤더 이미지 단독 표시 */
 .page-header {
   background: none !important;
   padding: 0 !important;
+  margin: 0 !important;
   text-align: center !important;
-  margin-bottom: 0 !important;
+  border-bottom: none !important;
 }
 
 .page-header::before {
@@ -11,23 +13,18 @@
   background-image: url("/assets/images/header.jpg") !important;
   background-repeat: no-repeat !important;
   background-position: center top !important;
-  background-size: auto !important;
-  width: 100% !important;
+  background-size: auto !important; /* 원본 크기 유지 */
   height: auto !important;
-  aspect-ratio: 966 / 330 !important;
-  margin-bottom: 0 !important;
+  margin: 0 auto !important;
 }
 
-/* 헤더와 본문 사이 여백 완전히 제거 */
+/* 제목과 부제목 제거 */
+.project-name, .project-tagline {
+  display: none !important;
+}
+
+/* 본문과 간격 제거 */
 .main-content {
   margin-top: 0 !important;
   padding-top: 0 !important;
-}
-
-/* 텍스트 위치 조정 */
-.project-name, .project-tagline {
-  position: relative !important;
-  top: -10px !important;
-  color: #fff !important;
-  text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.8) !important;
 }
