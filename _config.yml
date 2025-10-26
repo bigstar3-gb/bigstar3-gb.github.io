@@ -2,3 +2,6 @@ title: "Bigstar Portfolio"
 description: "간단 소개 + 링크 허브"
 theme: jekyll-theme-cayman
 markdown: kramdown
+# 기존 내용 아래에 추가
+include:
+  - assets/css/custom.css
