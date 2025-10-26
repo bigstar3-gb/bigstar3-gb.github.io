@@ -14,7 +14,7 @@
   display: block;
   background-image: url("/assets/images/header.jpg") !important;
   background-repeat: no-repeat !important;
-  background-position: left 20% top !important;
+  background-position: left 50% top !important;
   background-size: contain !important; /* 원본 비율 유지 */
   width: 100% !important;
   height: 250px !important; /* 헤더 영역 유지 */
