@@ -1,0 +1,18 @@
+/* 커스텀 헤더 배경 이미지 설정 */
+.page-header {
+  background-image: url("/assets/images/header.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: transparent;
+  height: 260px; /* 배너 높이 조정 (필요시 수정 가능) */
+}
+
+.project-name {
+  color: #fff;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+.project-tagline {
+  color: #eaeaea;
+}
