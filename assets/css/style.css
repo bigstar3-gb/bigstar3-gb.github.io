@@ -211,20 +211,21 @@
       gap: 22px;
     }
 
-    .hero {
-      border-radius: var(--radius-xl);
-      padding: 26px 26px 26px;
-      background: linear-gradient(
+  .hero {
+  border-radius: var(--radius-xl);
+  padding: 26px 26px 26px;
+  background: linear-gradient(
     135deg,
-    rgba(0,100,255,0.20),
-    rgba(0,50,120,0.55),
-    rgba(0,20,50,0.95)
-     );
-      border: 1px solid var(--border);
-      box-shadow: var(--shadow-soft);
-      position: relative;
-      overflow: hidden;
-    }
+    rgba(0,255,120,0.25),
+    rgba(0,140,60,0.60),
+    rgba(0,60,25,0.95)
+  );
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  overflow: hidden;
+}
+
 
     .hero-pill {
       display: inline-flex;
