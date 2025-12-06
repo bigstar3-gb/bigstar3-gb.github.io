@@ -44,7 +44,11 @@
       <a href="#learning"><span>자격증등</span></a>
       <a href="#wordcloud"><span>WordCloud</span></a>
       <p style="margin-top:16px;">
-     <p>방문자 수: <span id="visit-count">...</span></p>
+    <p>
+  방문자 수:
+  <img src="https://profile-counter.glitch.me/bigstar3-gb/count.svg" alt="visitor count">
+</p>
+
     </nav>
 
     <div class="sidebar-footer">
@@ -313,26 +317,6 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
 </script>
-<script>
-  (async () => {
-    const el = document.getElementById("visit-count");
-    if (!el) return;  // span 못 찾으면 그냥 종료
-
-    try {
-      const res = await fetch("https://api.countapi.xyz/hit/bigstar3-gb.github.io/visits");
-      const data = await res.json();
-
-      if (typeof data.value === "number") {
-        el.textContent = data.value.toLocaleString();
-      } else {
-        el.textContent = "불러오기 오류";
-      }
-    } catch (e) {
-      el.textContent = "연결 실패";
-    }
-  })();
-</script>
-
 
 </body>
 </html>
