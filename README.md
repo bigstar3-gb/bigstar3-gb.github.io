@@ -61,23 +61,23 @@ bigstar3-gb.github.io/
 └─ README.md           # 이 파일
 ```
 🚀 로컬에서 미리 보기 (선택)
-로컬에서 간단히 확인해 보고 싶다면:
-레포지토리 클론
-git clone https://github.com/bigstar3-gb/bigstar3-gb.github.io.git
-cd bigstar3-gb.github.io
-간단한 로컬 서버 실행 (Python 예시)
-python -m http.server 8000
-브라우저에서 접속
-http://localhost:8000
+- 로컬에서 간단히 확인해 보고 싶다면:
+  - 레포지토리 클론
+  - git clone https://github.com/bigstar3-gb/bigstar3-gb.github.io.git
+  - cd bigstar3-gb.github.io
+- 간단한 로컬 서버 실행 (Python 예시)
+  - python -m http.server 8000
+  - 브라우저에서 접속
+  - http://localhost:8000
 
 🎯 앞으로의 계획
-한자·우리말 어원 콘텐츠를 체계적인 목차로 재정리
+- 한자·우리말 어원 콘텐츠를 체계적인 목차로 재정리
 각 섹션별로 유튜브 영상·블로그 글 링크 연결
-AI 도구 활용 사례(이미지/영상 생성, 코드 없는 머신러닝 등) 정리
+- AI 도구 활용 사례(이미지/영상 생성, 코드 없는 머신러닝 등) 정리
 방문 통계/Analytics 도입 후, 학습자·구독자를 위한 구조로 개선
 📫 문의 및 링크
-GitHub: @bigstar3-gb
-(선택) 블로그, 유튜브, 이메일 링크 추후 추가 예정
+- GitHub: @bigstar3-gb
+  -(선택) 블로그, 유튜브, 이메일 링크 추후 추가 예정
 이 레포지토리는 국단비의 실험실이자 작업 노트이다.
 디자인, 구조, 내용은 계속해서 변화 중이다.
 
