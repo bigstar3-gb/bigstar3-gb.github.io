@@ -314,12 +314,25 @@
     }
 </script>
 <script>
-  fetch("https://api.countapi.xyz/hit/bigstar3-gb.github.io/visits")
-    .then(res => res.json())
-    .then(res => {
-      document.getElementById("visit-count").innerText = res.value;
-    });
+  (async () => {
+    const el = document.getElementById("visit-count");
+    if (!el) return;  // span 못 찾으면 그냥 종료
+
+    try {
+      const res = await fetch("https://api.countapi.xyz/hit/bigstar3-gb.github.io/visits");
+      const data = await res.json();
+
+      if (typeof data.value === "number") {
+        el.textContent = data.value.toLocaleString();
+      } else {
+        el.textContent = "불러오기 오류";
+      }
+    } catch (e) {
+      el.textContent = "연결 실패";
+    }
+  })();
 </script>
+
 
 </body>
 </html>
