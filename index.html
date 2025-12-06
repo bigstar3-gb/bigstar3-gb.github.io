@@ -44,12 +44,7 @@
       <a href="#learning"><span>자격증등</span></a>
       <a href="#wordcloud"><span>WordCloud</span></a>
       <p style="margin-top:16px;">
- <p style="margin-top:16px;">
-  방문자 수 :
-  <img src="https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fbigstar3-gb.github.io&title=visits&count_bg=%23FFD700&title_bg=%230F172A&edge_flat=true" alt="hits">
-</p>
-
-
+     <p>방문자 수: <span id="visit-count">...</span></p>
     </nav>
 
     <div class="sidebar-footer">
@@ -317,6 +312,13 @@
     function scrollToTop() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     }
+</script>
+<script>
+  fetch("https://api.countapi.xyz/hit/bigstar3-gb.github.io/visits")
+    .then(res => res.json())
+    .then(res => {
+      document.getElementById("visit-count").innerText = res.value;
+    });
 </script>
 
 </body>
