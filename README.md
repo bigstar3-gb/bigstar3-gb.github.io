@@ -67,10 +67,6 @@ bigstar3-gb.github.io/
   - 레포지토리 클론
   - git clone https://github.com/bigstar3-gb/bigstar3-gb.github.io.git
   - cd bigstar3-gb.github.io
-- 간단한 로컬 서버 실행 (Python 예시)
-  - python -m http.server 8000
-  - 브라우저에서 접속
-  - http://localhost:8000
 
 🎯 앞으로의 계획
 - 한자·우리말 어원 콘텐츠를 체계적인 목차로 재정리
