@@ -113,4 +113,8 @@ mask = np.where(heart_inside, 255, 0).astype(np.uint8)
 국단비 키워드를 중심으로 강조하여 표현하였다.
 
 ![국단비 하트 워드클라우드](assets/img/wordcloud.png)
+---
+### 🔍 검색 키워드
+GitHub Pages, Portfolio, AI, WordCloud, Korean, Hanja, Calligraphy, Education, 국단비, 한자교육, 어원, 천자문, 포트폴리오, 워드클라우드, 웹포트폴리오
+
 
