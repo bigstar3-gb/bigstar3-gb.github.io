@@ -6,6 +6,9 @@
   <title>국단비 놀이터 | 무슨 꽃일까?</title>
   <meta name="description" content="국단비 놀이터 — 확대된 꽃 사진을 보고 이름을 맞혀 나만의 꽃밭을 가꾸는 게임">
   <link rel="icon" href="assets/img/etc/heart.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3d2a23">
+  <link rel="apple-touch-icon" href="assets/img/app/apple-touch-icon.png">
   <style>
     :root{
       --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
@@ -378,5 +381,6 @@ document.addEventListener('keydown', e => {
 window.addEventListener('resize', () => { if (photo.naturalWidth) fitFrame(); });
 updateInfo(); drawBed();
 </script>
+<script src="assets/js/app.js"></script>
 </body>
 </html>
