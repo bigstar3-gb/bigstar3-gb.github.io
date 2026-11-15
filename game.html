@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 블록 쌓기</title>
+  <meta name="description" content="국단비 놀이터 — 천천히 즐기는 블록 쌓기 게임">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --cream:#f7f2ea; --muted:#e6dcd4; --line:rgba(255,255,255,.18);
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;
+      display:flex;flex-direction:column;align-items:center;
+      -webkit-user-select:none;user-select:none;touch-action:manipulation;overflow:hidden}
+    a{color:inherit;text-decoration:none}
+
+    /* 상단 띠 */
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line)}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;
+      font-size:20px;cursor:pointer}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    /* 처음 환영 장면: 하트가 떨어지고 인사 */
+    .intro{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:10px;background:#1a1411;border-radius:6px;overflow:hidden;cursor:pointer;text-align:center;padding:16px}
+    .intro[hidden]{display:none}
+    .intro img{width:62%;max-width:220px;animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(20px,5.2vw,26px);font-weight:800;line-height:1.5;color:#fff;word-break:keep-all;
+      opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:#c9a4ff}
+    .intro .skip{position:absolute;bottom:12px;font-size:13px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{
+      0%{transform:translateY(-140%) rotate(-12deg);opacity:0}
+      15%{opacity:1}
+      60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}
+      88%{transform:translateY(0)}
+      94%{transform:translateY(-4%)}
+      100%{transform:translateY(0)}
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    /* 게임 영역 */
+    .game{flex:1;min-height:0;width:100%;max-width:760px;display:flex;gap:18px;
+      justify-content:center;align-items:flex-start;padding:14px 3vw 0}
+    .board-wrap{position:relative;height:100%;display:flex;justify-content:center}
+    canvas#board{height:100%;max-height:100%;aspect-ratio:1/2;background:#1a1411;
+      border:2px solid var(--red);border-radius:6px;display:block}
+    .side{width:170px;flex:none;display:flex;flex-direction:column;gap:8px;max-height:100%}
+    .box{background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:6px 12px}
+    .box .label{font-size:14px;color:var(--muted)}
+    .box .val{font-size:22px;font-weight:800;line-height:1.3}
+    canvas#next{width:72px;aspect-ratio:1/1;display:block;margin:2px auto 0}
+    .side button{font-family:var(--font)}
+    .small-btn{width:100%;padding:8px;border-radius:30px;border:1.5px solid #fff;background:none;color:#fff;
+      font-size:16px;font-weight:700;cursor:pointer}
+    .menu-box{display:flex;flex-direction:column;gap:6px}
+    .small-btn.red{background:var(--red);border-color:var(--red)}
+    .speed{display:flex;gap:4px;margin-top:4px}
+    .speed button{flex:1;padding:6px 0;white-space:nowrap;border-radius:8px;border:1px solid var(--line);background:none;color:var(--muted);
+      font-size:14px;cursor:pointer}
+    .speed button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark);font-weight:700}
+
+    /* 덮개(시작·일시정지·끝) */
+    .cover{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:14px;background:rgba(26,20,17,.88);border-radius:6px;text-align:center;padding:16px}
+    .cover[hidden]{display:none}
+    .cover h2{font-size:26px;color:var(--accent)}
+    .cover p{font-size:17px;color:var(--muted);line-height:1.6;word-break:keep-all}
+    .cover button{padding:14px 34px;border-radius:40px;border:none;background:var(--red);color:#fff;
+      font-size:20px;font-weight:800;cursor:pointer;font-family:var(--font)}
+
+    /* 아래 큰 조작 버튼 */
+    .pad{flex:none;width:100%;max-width:560px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+      padding:12px 3vw calc(12px + env(safe-area-inset-bottom))}
+    .pad button{height:68px;border-radius:16px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;
+      font-size:30px;font-weight:800;cursor:pointer;font-family:var(--font);touch-action:none}
+    .pad button:active,.pad button.press{background:var(--red);border-color:var(--red)}
+    .pad .drop{grid-column:span 4;height:54px;font-size:19px;background:#5a3f34}
+    .pad small{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-top:-2px}
+    .keys{font-size:13px;color:var(--muted);text-align:center;padding-bottom:10px}
+
+    /* 폰 화면: 옆 칸을 위로 올려 가로 한 줄 */
+    @media (max-width:640px){
+      .game{flex-direction:column;align-items:center;gap:8px;padding-top:8px}
+      .side{width:100%;max-width:560px;flex-direction:row;flex-wrap:nowrap;gap:6px;order:-1}
+      .side .box{flex:1;padding:6px 8px;text-align:center}
+      .box .label{font-size:12px}
+      .box .val{font-size:19px}
+      .side .next-box{flex:0 0 64px;padding:4px;display:flex;align-items:center}
+      canvas#next{width:100%}
+      .side .next-box .label{display:none}
+      .menu-box{display:flex;flex-direction:column;justify-content:center;gap:4px;flex:0 0 82px;padding:0;background:none;border:none}
+      .side .speed-box{display:none}
+      .small-btn{padding:7px 0;font-size:14px;white-space:nowrap}
+      .board-wrap{flex:1;min-height:0;width:100%}
+      .keys{display:none}
+      .top h1 .long{display:none}
+      .pad button{height:62px}
+      .pad .drop{height:48px}
+    }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1>🎮 <span class="long">국단비 놀이터 · </span>블록 쌓기</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main class="game">
+  <div class="board-wrap">
+    <canvas id="board" width="300" height="600"></canvas>
+    <div class="intro" id="intro">
+      <img src="assets/img/etc/heart.png" alt="국단비 하트">
+      <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+      <span class="skip">화면을 누르면 바로 시작</span>
+    </div>
+    <div class="cover" id="cover" hidden>
+      <h2 id="coverTitle">블록 쌓기</h2>
+      <p id="coverText">떨어지는 블록을 돌리고 옮겨서<br>가로 한 줄을 빈틈없이 채우면 사라집니다.<br>천천히 시작해 보세요!</p>
+      <button id="coverBtn">시작하기</button>
+    </div>
+  </div>
+
+  <aside class="side">
+    <div class="box"><div class="label">점수</div><div class="val" id="score">0</div></div>
+    <div class="box"><div class="label">지운 줄</div><div class="val" id="lines">0</div></div>
+    <div class="box"><div class="label">최고 점수</div><div class="val" id="best">0</div></div>
+    <div class="box next-box"><div class="label">다음 블록</div><canvas id="next" width="120" height="120"></canvas></div>
+    <div class="box speed-box">
+      <div class="label">빠르기</div>
+      <div class="speed" id="speed">
+        <button data-s="0" class="on">느리게</button><button data-s="1">보통</button><button data-s="2">빠르게</button>
+      </div>
+    </div>
+    <div class="box menu-box">
+      <button class="small-btn red" id="pauseBtn">멈춤</button>
+      <button class="small-btn" id="restartBtn">처음부터</button>
+    </div>
+  </aside>
+</main>
+
+<nav class="pad" id="pad">
+  <button data-act="left"  aria-label="왼쪽">◀</button>
+  <button data-act="rotate" aria-label="돌리기">⟳</button>
+  <button data-act="down"  aria-label="한 칸 내리기">▼</button>
+  <button data-act="right" aria-label="오른쪽">▶</button>
+  <button data-act="drop" class="drop">⤓ 뚝 떨어뜨리기</button>
+</nav>
+<p class="keys">키보드: ← → 옮기기 · ↑ 돌리기 · ↓ 내리기 · 스페이스 뚝 · P 멈춤</p>
+
+<script>
+/* ===== 기본 설정 ===== */
+const COLS = 10, ROWS = 20;
+const board = document.getElementById('board'), ctx = board.getContext('2d');
+const nextCv = document.getElementById('next'), nctx = nextCv.getContext('2d');
+const CELL = board.width / COLS;
+
+// 블록 7가지 (모양, 색)
+const SHAPES = {
+  I: { c:'#5ca0f1', m:[[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]] },
+  O: { c:'#f5c542', m:[[1,1],[1,1]] },
+  T: { c:'#b07ae8', m:[[0,1,0],[1,1,1],[0,0,0]] },
+  S: { c:'#6cc070', m:[[0,1,1],[1,1,0],[0,0,0]] },
+  Z: { c:'#e8505b', m:[[1,1,0],[0,1,1],[0,0,0]] },
+  J: { c:'#3f6fd8', m:[[1,0,0],[1,1,1],[0,0,0]] },
+  L: { c:'#f0a37b', m:[[0,0,1],[1,1,1],[0,0,0]] },
+};
+// 빠르기: 느리게/보통/빠르게 — 시작 낙하 간격(ms)
+const SPEEDS = [1100, 800, 550];
+
+let grid, cur, next, bag = [];
+let score = 0, lines = 0, speedIdx = 0;
+let state = 'ready';            // ready | play | pause | over
+let lastTime = 0, dropAcc = 0;
+
+// 최고 점수는 이 브라우저에만 저장 (안 되면 그냥 넘어감)
+let best = 0;
+try { best = Number(localStorage.getItem('gukdanbi-block-best')) || 0; } catch (e) {}
+document.getElementById('best').textContent = best;
+
+/* ===== 효과음 (기본은 꺼짐, 소리 파일 없이 코드로 만든 짧은 소리) ===== */
+let soundOn = false, actx = null;
+try { soundOn = localStorage.getItem('gukdanbi-sound') === 'on'; } catch (e) {}
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => {
+  soundOn = !soundOn;
+  try { localStorage.setItem('gukdanbi-sound', soundOn ? 'on' : 'off'); } catch (e) {}
+  showSoundBtn(); soundBtn.blur();
+  if (soundOn) beep('rotate');
+};
+// 음(주파수 Hz)·길이(초)·모양을 이어 붙여 소리 하나를 만듦
+const SOUNDS = {
+  rotate: [[660, .05]],
+  lock:   [[150, .08, 'triangle']],
+  clear:  [[523, .09], [659, .09], [784, .16]],          // 도-미-솔
+  over:   [[392, .18], [330, .18], [262, .32]],          // 솔-미-도 (내려가는 소리)
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d);
+      t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 블록 만들기 ===== */
+function newBag() {                       // 7개를 섞어 골고루 나오게
+  const b = Object.keys(SHAPES);
+  for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; }
+  return b;
+}
+function takePiece() {
+  if (!bag.length) bag = newBag();
+  const k = bag.pop();
+  const m = SHAPES[k].m.map(r => r.slice());
+  return { k, m, c: SHAPES[k].c, x: Math.floor((COLS - m[0].length) / 2), y: k === 'I' ? -1 : 0 };
+}
+function rotated(m) { return m[0].map((_, i) => m.map(r => r[i]).reverse()); }  // 시계 방향
+
+function hits(m, x, y) {
+  for (let r = 0; r < m.length; r++)
+    for (let c = 0; c < m[r].length; c++) {
+      if (!m[r][c]) continue;
+      const gx = x + c, gy = y + r;
+      if (gx < 0 || gx >= COLS || gy >= ROWS) return true;
+      if (gy >= 0 && grid[gy][gx]) return true;
+    }
+  return false;
+}
+
+/* ===== 움직임 ===== */
+function move(dx) { if (!hits(cur.m, cur.x + dx, cur.y)) cur.x += dx; }
+function rotate() {
+  const m = rotated(cur.m);
+  for (const k of [0, -1, 1, -2, 2]) {     // 벽에 붙어 있어도 살짝 밀어서 돌려 줌
+    if (!hits(m, cur.x + k, cur.y)) { cur.m = m; cur.x += k; beep('rotate'); return; }
+  }
+}
+function softDrop() {
+  if (!hits(cur.m, cur.x, cur.y + 1)) { cur.y++; score += 1; }
+  else lock();
+  dropAcc = 0;
+}
+function hardDrop() {
+  let n = 0;
+  while (!hits(cur.m, cur.x, cur.y + 1)) { cur.y++; n++; }
+  score += n * 2;
+  lock();
+}
+function lock() {
+  cur.m.forEach((row, r) => row.forEach((v, c) => {
+    if (v && cur.y + r >= 0) grid[cur.y + r][cur.x + c] = cur.c;
+  }));
+  if (!clearLines()) beep('lock');
+  cur = next; next = takePiece();
+  dropAcc = 0;
+  if (hits(cur.m, cur.x, cur.y)) gameOver();
+  updateInfo();
+}
+function clearLines() {
+  let n = 0;
+  for (let r = ROWS - 1; r >= 0; r--) {
+    if (grid[r].every(v => v)) { grid.splice(r, 1); grid.unshift(Array(COLS).fill(null)); n++; r++; }
+  }
+  if (n) { lines += n; score += [0, 100, 300, 500, 800][n]; flash = 8; beep('clear'); }
+  return n;
+}
+function interval() {                     // 10줄마다 조금씩 빨라짐 (최소 150ms)
+  return Math.max(150, SPEEDS[speedIdx] - Math.floor(lines / 10) * 70);
+}
+
+/* ===== 그리기 ===== */
+let flash = 0;
+function cell(g, x, y, color, size, alpha = 1) {
+  g.globalAlpha = alpha;
+  g.fillStyle = color;
+  g.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  g.fillStyle = 'rgba(255,255,255,.25)';           // 위쪽 밝은 띠 (입체감)
+  g.fillRect(x * size + 1, y * size + 1, size - 2, size * .18);
+  g.globalAlpha = 1;
+}
+function draw() {
+  ctx.fillStyle = flash > 0 ? '#3a2a22' : '#1a1411';
+  ctx.fillRect(0, 0, board.width, board.height);
+  if (flash > 0) flash--;
+  ctx.strokeStyle = 'rgba(255,255,255,.05)';      // 옅은 칸 선
+  for (let i = 1; i < COLS; i++) { ctx.beginPath(); ctx.moveTo(i * CELL, 0); ctx.lineTo(i * CELL, board.height); ctx.stroke(); }
+  for (let i = 1; i < ROWS; i++) { ctx.beginPath(); ctx.moveTo(0, i * CELL); ctx.lineTo(board.width, i * CELL); ctx.stroke(); }
+
+  grid.forEach((row, r) => row.forEach((v, c) => { if (v) cell(ctx, c, r, v, CELL); }));
+
+  if (cur && state !== 'ready') {
+    let gy = cur.y;                                // 떨어질 자리 미리 보기 (흐린 그림자)
+    while (!hits(cur.m, cur.x, gy + 1)) gy++;
+    cur.m.forEach((row, r) => row.forEach((v, c) => { if (v && gy + r >= 0) cell(ctx, cur.x + c, gy + r, cur.c, CELL, .22); }));
+    cur.m.forEach((row, r) => row.forEach((v, c) => { if (v && cur.y + r >= 0) cell(ctx, cur.x + c, cur.y + r, cur.c, CELL); }));
+  }
+}
+function drawNext() {
+  nctx.clearRect(0, 0, nextCv.width, nextCv.height);
+  if (!next) return;
+  const m = next.m, s = nextCv.width / 4;
+  const rows = m.filter(r => r.some(v => v)), top = m.indexOf(rows[0]);
+  const w = m[0].length, ox = (4 - w) / 2, oy = (4 - rows.length) / 2 - top;
+  m.forEach((row, r) => row.forEach((v, c) => { if (v) cell(nctx, c + ox, r + oy, next.c, s); }));
+}
+function updateInfo() {
+  document.getElementById('score').textContent = score;
+  document.getElementById('lines').textContent = lines;
+  drawNext();
+}
+
+/* ===== 게임 흐름 ===== */
+const cover = document.getElementById('cover');
+const coverTitle = document.getElementById('coverTitle');
+const coverText = document.getElementById('coverText');
+const coverBtn = document.getElementById('coverBtn');
+const pauseBtn = document.getElementById('pauseBtn');
+
+function reset() {
+  grid = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+  bag = []; score = 0; lines = 0; dropAcc = 0;
+  cur = takePiece(); next = takePiece();
+  updateInfo();
+}
+function start() {
+  reset();
+  state = 'play'; cover.hidden = true; pauseBtn.textContent = '멈춤';
+}
+function pause() {
+  if (state === 'play') {
+    state = 'pause'; pauseBtn.textContent = '계속';
+    showCover('잠깐 쉬는 중', '준비되면 아래 버튼을 눌러 주세요.', '계속하기');
+  } else if (state === 'pause') {
+    state = 'play'; pauseBtn.textContent = '멈춤'; cover.hidden = true;
+  }
+}
+function gameOver() {
+  state = 'over';
+  beep('over');
+  let msg = `점수 <b>${score}</b>점 · 지운 줄 <b>${lines}</b>줄`;
+  if (score > best) {
+    best = score;
+    try { localStorage.setItem('gukdanbi-block-best', best); } catch (e) {}
+    document.getElementById('best').textContent = best;
+    msg += '<br>🎉 최고 점수를 새로 세우셨어요!';
+  }
+  showCover('끝났습니다', msg, '다시 하기');
+}
+function showCover(t, p, b) { coverTitle.textContent = t; coverText.innerHTML = p; coverBtn.textContent = b; cover.hidden = false; }
+
+coverBtn.onclick = () => state === 'pause' ? pause() : start();
+pauseBtn.onclick = () => { if (state === 'play' || state === 'pause') pause(); };
+document.getElementById('restartBtn').onclick = () => { if (state === 'ready' || confirmRestart()) start(); };
+function confirmRestart() { return state === 'over' || window.confirm('처음부터 다시 할까요?'); }
+
+document.querySelectorAll('#speed button').forEach(b => b.onclick = () => {
+  speedIdx = Number(b.dataset.s);
+  document.querySelectorAll('#speed button').forEach(x => x.classList.toggle('on', x === b));
+  b.blur();
+});
+
+function loop(t) {
+  const dt = t - lastTime; lastTime = t;
+  if (state === 'play') {
+    dropAcc += dt;
+    if (dropAcc >= interval()) { dropAcc = 0; if (!hits(cur.m, cur.x, cur.y + 1)) cur.y++; else lock(); }
+  }
+  draw();
+  requestAnimationFrame(loop);
+}
+
+/* ===== 조작: 화면 버튼 (꾹 누르면 계속 움직임) ===== */
+function act(a) {
+  if (state !== 'play') return;
+  if (a === 'left') move(-1);
+  else if (a === 'right') move(1);
+  else if (a === 'rotate') rotate();
+  else if (a === 'down') softDrop();
+  else if (a === 'drop') hardDrop();
+  updateInfo();
+}
+document.querySelectorAll('#pad button').forEach(btn => {
+  const a = btn.dataset.act;
+  let hold, rep;
+  const stop = () => { clearTimeout(hold); clearInterval(rep); btn.classList.remove('press'); };
+  btn.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    btn.classList.add('press');
+    act(a);
+    if (a === 'left' || a === 'right' || a === 'down') {          // 반복은 옮기기·내리기만
+      hold = setTimeout(() => rep = setInterval(() => act(a), 90), 280);
+    }
+  });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => btn.addEventListener(ev, stop));
+  btn.addEventListener('contextmenu', e => e.preventDefault());
+});
+
+/* ===== 조작: 키보드 (맥북) ===== */
+document.addEventListener('keydown', e => {
+  if (!introDone) { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); endIntro(); } return; }
+  const map = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'rotate', ArrowDown: 'down', ' ': 'drop' };
+  if (map[e.key]) { e.preventDefault(); if (e.key === ' ' && state !== 'play' && state !== 'pause') { start(); return; } act(map[e.key]); }
+  else if (e.key === 'p' || e.key === 'P' || e.key === 'ㅔ') pause();
+  else if (e.key === 'Enter' && !cover.hidden) coverBtn.click();
+});
+
+// 다른 앱으로 넘어가면 자동으로 멈춤
+document.addEventListener('visibilitychange', () => { if (document.hidden && state === 'play') pause(); });
+
+/* ===== 처음 환영 장면 (약 3.5초, 누르면 바로 넘어감) ===== */
+const intro = document.getElementById('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true;
+  intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; cover.hidden = false; }, 450);
+}
+intro.addEventListener('click', endIntro);
+setTimeout(endIntro, 3500);
+
+reset();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

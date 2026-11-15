@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 국단비 대각선 곱셈 암산</title>
+  <meta name="description" content="국단비 두 자릿수 대각선 곱셈 암산법 — 원칙 따라 하기, 유형별 연습, 암산 도전">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b; --blue:#5ca0f1; --x:#ff4d5e;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --purple:#c9a4ff; --green:#3f9b5a;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      -webkit-user-select:none;user-select:none;touch-action:manipulation}
+    a{color:inherit;text-decoration:none}
+    button{font-family:var(--font);cursor:pointer;color:#fff}
+
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;gap:8px;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px;flex:none}
+    .top .home img{height:26px}
+    .top h1{font-size:17px;font-weight:700;color:var(--accent);text-align:center}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;font-size:20px;flex:none}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{flex:1;width:100%;max-width:640px;padding:14px 4vw 20px}
+    .screen[hidden]{display:none}
+    h2{font-size:24px;color:var(--accent);margin:4px 0 10px}
+    .sub{color:var(--muted);font-size:16px;line-height:1.6;word-break:keep-all;margin-bottom:14px}
+    .back{background:none;border:none;color:var(--muted);font-size:16px;padding:4px 0;margin-bottom:6px}
+
+    /* 첫 화면 메뉴 */
+    .menu{display:grid;gap:12px}
+    .menu button{display:flex;align-items:center;gap:14px;text-align:left;padding:18px;border-radius:16px;
+      border:1px solid var(--line);background:var(--wood-dark)}
+    .menu button:hover{border-color:var(--red)}
+    .menu .ic{font-size:34px;flex:none}
+    .menu b{display:block;font-size:21px}
+    .menu small{display:block;font-size:15px;color:var(--muted);margin-top:2px;word-break:keep-all}
+    .record{margin-top:14px;font-size:15px;color:var(--muted);text-align:center}
+
+    /* 문제 그림: 2×2 숫자 + 빨간 곱하기 + 파란 막대 */
+    .prob{display:flex;align-items:center;justify-content:center;gap:18px;margin:2px 0 10px}
+    .grid{position:relative;width:150px;height:150px;flex:none}
+    .grid svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+    .grid .d{position:absolute;width:56px;height:56px;display:flex;align-items:center;justify-content:center;
+      font-size:40px;font-weight:800;background:var(--wood-dark);border-radius:12px;border:1px solid var(--line);z-index:1}
+    .grid .d0{left:0;top:0}.grid .d1{right:0;top:0}.grid .d2{left:0;bottom:0}.grid .d3{right:0;bottom:0}
+    .grid line{stroke-width:7;stroke-linecap:round;opacity:.22;transition:opacity .3s}
+    .grid line.on{opacity:1}
+    .grid .x{stroke:var(--x)} .grid .bar{stroke:var(--blue)}
+    .eq{font-size:30px;font-weight:800;white-space:nowrap}
+    .eq small{display:block;font-size:14px;color:var(--purple);font-weight:700;margin-top:4px}
+
+    /* 단계 칸 (따라 하기) */
+    .steps{display:grid;gap:8px;margin-bottom:12px}
+    .step{display:flex;align-items:center;gap:10px;padding:7px 12px;border-radius:12px;background:var(--wood-dark);
+      border:1.5px solid var(--line);opacity:.55}
+    .step.now{opacity:1;border-color:var(--accent)}
+    .step.done{opacity:1;border-color:var(--green)}
+    .step .n{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;
+      justify-content:center;font-weight:800;flex:none}
+    .step.done .n{background:var(--green)}
+    .step .t{flex:1;min-width:0;font-size:16px;line-height:1.4;word-break:keep-all}
+    .step .t small{display:none;color:var(--muted);font-size:14px}
+    .step.now .t small{display:block}
+    .step .v{min-width:76px;text-align:right;font-size:24px;font-weight:800;color:var(--accent)}
+    .step.done .v{color:#fff}
+    .red{color:var(--x)!important} .zero{color:#fff!important}            /* 대각선 값: 빨간 두 자리 + 흰 0 */
+    .answer .box.tail0::after{content:'0';color:#fff;opacity:.55}
+    .answer .box.tail00::after{content:'00';color:#fff;opacity:.4}
+    /* 자릿값 칸: 천 백 │ 십 일 */
+    .steps{position:relative}
+    .step .fm{flex:none;font-size:20px;font-weight:600;color:#fff;font-family:Georgia,"Times New Roman",serif;white-space:nowrap}
+    .pv{display:flex;flex:none}
+    .pv i{font-style:normal;width:21px;text-align:center;font-size:26px;font-weight:800;color:#fff;font-family:Georgia,"Times New Roman",serif}
+    .pv i.dim{color:#fff;opacity:.45}
+    .redline{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--x);pointer-events:none}
+
+    /* 답 입력 */
+    .answer{display:flex;align-items:center;justify-content:center;gap:10px;margin:4px 0 10px}
+    .answer .box{min-width:150px;height:62px;border-radius:14px;background:#1a1411;border:2px solid var(--accent);
+      font-size:34px;font-weight:800;display:flex;align-items:center;justify-content:center;letter-spacing:2px;padding:0 14px}
+    .answer .box.bad{border-color:var(--red);animation:shake .35s}
+    .answer .box.good{border-color:var(--green)}
+    @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .say{min-height:26px;text-align:center;font-size:17px;font-weight:700;color:var(--accent);margin-bottom:8px;word-break:keep-all}
+
+    .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .pad button{height:58px;border-radius:14px;border:1.5px solid var(--line);background:var(--wood-dark);font-size:26px;font-weight:800}
+    .pad button:active{background:var(--red)}
+    .pad .ok{background:var(--red);border-color:var(--red);font-size:20px}
+    .pad .del{font-size:20px}
+    .row{display:flex;gap:8px;margin-top:10px}
+    .row button{flex:1;height:50px;border-radius:14px;border:1.5px solid var(--line);background:none;font-size:17px;font-weight:700}
+    .row .main{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+
+    /* 풀이 보기 */
+    .sol{background:#1a1411;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:10px 0;font-size:16px;line-height:1.75}
+    .sol[hidden]{display:none}
+    .sol b{color:var(--accent)}
+    .sol .h{color:var(--purple);font-weight:800;margin-top:6px}
+    .sol .h:first-child{margin-top:0}
+
+    /* 유형 목록·카드 */
+    .types{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+    .types button{text-align:left;padding:14px;border-radius:14px;border:1px solid var(--line);background:var(--wood-dark)}
+    .types b{display:block;font-size:19px}
+    .types small{display:block;color:var(--muted);font-size:14px;margin-top:3px;word-break:keep-all}
+    .types .best{color:var(--accent)}
+    .card{background:var(--wood-dark);border:1px solid var(--line);border-radius:14px;padding:14px 16px;font-size:16px;line-height:1.75;word-break:keep-all}
+    .card .k{color:var(--purple);font-weight:800;margin-top:8px}
+    .card .k:first-child{margin-top:0}
+    .card .ex{color:var(--accent);font-weight:700}
+
+    .bar-top{display:flex;justify-content:space-between;align-items:center;font-size:16px;color:var(--muted);margin-bottom:4px}
+    .bar-top b{color:#fff;font-size:18px}
+
+    /* 결과 */
+    .result{text-align:center}
+    .result .stars{font-size:46px;letter-spacing:6px;margin:6px 0;color:#f5c542}
+    .result p{color:var(--muted);font-size:17px;line-height:1.7}
+    .prize{margin:14px auto;background:var(--wood-dark);border:2px solid var(--purple);border-radius:12px;overflow:hidden;max-width:420px}
+    .prize img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+    .prize figcaption{padding:6px;font-size:18px;font-weight:800;color:var(--purple)}
+    .prize[hidden]{display:none}
+    .miss{text-align:left;margin:10px auto;max-width:420px;font-size:16px;line-height:1.8;color:var(--muted)}
+
+    /* 환영 장면 */
+    .intro{position:fixed;inset:56px 0 0 0;z-index:5;background:#1a1411;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:12px;text-align:center;cursor:pointer}
+    .intro[hidden]{display:none}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    @media (max-width:640px){
+      .top h1 .long{display:none}
+      .grid{width:128px;height:128px} .grid .d{width:48px;height:48px;font-size:34px}
+      .eq{font-size:26px}
+      .pad button{height:54px}
+    }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1>✖️ <span class="long">국단비 </span>대각선 곱셈 암산</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <!-- 첫 화면 -->
+  <section class="screen" id="sMenu">
+    <h2>국단비 두 자릿수<br>대각선 곱셈 암산법</h2>
+    <p class="sub">대각선 값을 먼저 구해 기억하고, 앞자리끼리·뒷자리끼리 곱해 끼워 넣으면 두 자릿수 곱셈이 암산으로 됩니다.</p>
+    <div class="menu">
+      <button id="goFollow"><span class="ic">✏️</span><span><b>원칙 따라 하기</b><small>대각선 값 → 앞자리 → 뒷자리 → 연결, 한 단계씩</small></span></button>
+      <button id="goTypes"><span class="ic">📚</span><span><b>유형별 연습</b><small>동수1형·동수2형·1형·9형·25형… 유형마다 10문제</small></span></button>
+      <button id="goChallenge"><span class="ic">⏱️</span><span><b>암산 도전</b><small>여러 유형이 섞인 10문제, 답만 입력! 다 맞히면 꽃 선물</small></span></button>
+    </div>
+    <p class="record" id="menuRecord"></p>
+  </section>
+
+  <!-- 원칙 따라 하기 -->
+  <section class="screen" id="sFollow" hidden>
+    <button class="back" data-back>← 처음으로</button>
+    <div class="prob" id="fProb"></div>
+    <div class="steps" id="fSteps"></div>
+    <div class="answer"><div class="box" id="fBox"></div></div>
+    <p class="say" id="fSay"></p>
+    <div class="pad" data-pad="f"></div>
+    <div class="row"><button id="fHint">💡 힌트</button><button class="main" id="fNext">다른 문제 ▶</button></div>
+  </section>
+
+  <!-- 유형 목록 -->
+  <section class="screen" id="sTypes" hidden>
+    <button class="back" data-back>← 처음으로</button>
+    <h2>📚 유형별 연습</h2>
+    <p class="sub">유형을 고르면 설명 카드를 보고, 그 유형 문제만 10개를 풀어 봅니다.</p>
+    <div class="types" id="typeList"></div>
+  </section>
+
+  <!-- 유형 카드 -->
+  <section class="screen" id="sCard" hidden>
+    <button class="back" id="cardBack">← 유형 목록</button>
+    <h2 id="cardTitle"></h2>
+    <div class="card" id="cardBody"></div>
+    <div class="row"><button class="main" id="cardStart">이 유형 10문제 풀기 ▶</button></div>
+  </section>
+
+  <!-- 문제 풀기 (유형 연습·암산 도전 공통) -->
+  <section class="screen" id="sQuiz" hidden>
+    <button class="back" id="quizBack">← 그만하기</button>
+    <div class="bar-top"><span id="qMode"></span><span><b id="qNum">1</b> / 10 · ✔ <b id="qRight">0</b></span><span id="qTime"></span></div>
+    <div class="prob" id="qProb"></div>
+    <div class="answer"><div class="box" id="qBox"></div></div>
+    <p class="say" id="qSay"></p>
+    <div class="sol" id="qSol" hidden></div>
+    <div class="pad" data-pad="q"></div>
+    <div class="row"><button id="qShow">🔍 풀이 보기</button><button class="main" id="qNext" hidden>다음 문제 ▶</button></div>
+  </section>
+
+  <!-- 결과 -->
+  <section class="screen result" id="sResult" hidden>
+    <h2 id="rTitle"></h2>
+    <div class="stars" id="rStars"></div>
+    <p id="rText"></p>
+    <figure class="prize" id="rPrize" hidden><img id="rImg" alt=""><figcaption id="rName"></figcaption></figure>
+    <div class="miss" id="rMiss"></div>
+    <div class="row"><button id="rMenu">처음으로</button><button class="main" id="rAgain">다시 하기</button></div>
+  </section>
+</main>
+
+<div class="intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<script src="assets/js/flowers.js"></script>
+<script>
+/* =====================================================================
+   국단비 두 자릿수 대각선 곱셈 암산법 — 계산 엔진
+   숫자 배치:  위 = 첫째 수 (A B),  아래 = 둘째 수 (C D)
+     A  B
+       ✕      대각선 값 = A×D + B×C   (실제 값은 ×10)
+     C  D     앞자리 = A×C + 대각선 앞자리 / 뒷자리 = B×D + 대각선 뒷자리×10
+   ===================================================================== */
+const rnd = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const pad2 = n => String(n).padStart(2, '0');
+const digits = (x, y) => [Math.floor(x / 10), x % 10, Math.floor(y / 10), y % 10];
+const fmt = n => n.toLocaleString('ko-KR');
+function maybeSwap(x, y) { return Math.random() < .5 ? [x, y] : [y, x]; }
+
+/* 원칙 풀이 (모든 문제에 공통) */
+function principle(x, y) {
+  const [A, B, C, D] = digits(x, y);
+  const diag = A * D + B * C, f0 = A * C, front = f0 + Math.floor(diag / 10);
+  const b0 = B * D, back = b0 + (diag % 10) * 10;
+  const carry = back >= 100 ? 1 : 0;
+  return { A, B, C, D, diag, f0, front, b0, back, finalFront: front + carry, finalBack: back - carry * 100,
+           ans: (front + carry) * 100 + (back - carry * 100) };
+}
+function principleLines(x, y) {
+  const p = principle(x, y), dt = Math.floor(p.diag / 10), du = p.diag % 10;
+  const L = [];
+  L.push(`① 대각선 값: ${p.A}×${p.D} + ${p.B}×${p.C} = ${p.A * p.D} + ${p.B * p.C} = <b class="red">${p.diag}</b><b class="zero">0</b>`);
+  let tip = '';
+  if (dt === p.A && dt < 10) tip = ` <small>(= (${p.C}+1)×${p.A})</small>`;
+  else if (dt === p.C && dt < 10) tip = ` <small>(= (${p.A}+1)×${p.C})</small>`;
+  L.push(`② 앞자리: ${p.A}×${p.C} = ${p.f0}, + 대각선 앞자리 ${dt} → <b>${p.front}</b>${tip}`);
+  L.push(`③ 뒷자리: ${p.B}×${p.D} = ${p.b0}, + 대각선 뒷자리 ${du}(${du * 10}) → <b>${p.back}</b>` +
+         (p.back >= 100 ? ` → 100이 넘으니 앞자리에 1 올림: 앞자리 <b>${p.finalFront}</b>, 뒷자리 <b>${pad2(p.finalBack)}</b>` : ''));
+  L.push(`④ 연결: ${p.finalFront} | ${pad2(p.finalBack)} → <b>${fmt(p.ans)}</b>`);
+  return L;
+}
+
+/* 같은 숫자(동수) 찾기: 네 자리 중 같은 두 숫자와 그 상대 숫자 둘 */
+function findDongsu(x, y) {
+  const [A, B, C, D] = digits(x, y);
+  const out = [];
+  if (A === C) out.push({ n: A, p: B, q: D, where: '십의 자리끼리' });
+  if (B === D) out.push({ n: B, p: A, q: C, where: '일의 자리끼리' });
+  if (A === B) out.push({ n: A, p: C, q: D, where: `${x}의 두 숫자` });
+  if (C === D) out.push({ n: C, p: A, q: B, where: `${y}의 두 숫자` });
+  return out;
+}
+
+/* ===== 유형 정의: 조건(카드 글) · 출제 · 유형 풀이 ===== */
+const TYPES = [
+  {
+    id: 'basic', name: '기본형', icon: '✖️',
+    short: '순수 빌딩숲 — 원칙 연습용',
+    card: { 조건: '같은 숫자도, 1·9도 없고, 가상 동수로 맞추기도 어려운 순수한 "빌딩숲" 문제. 원칙(대각선 값 → 앞자리 → 뒷자리 → 연결)을 연습하는 유형입니다.',
+            방법: '① 대각선끼리 곱해 더한 대각선 값을 기억 → ② 십의 자리끼리 곱하고 대각선 앞자리를 더해 앞자리 확정 → ③ 일의 자리끼리 곱하고 대각선 뒷자리(×10)를 더함 → ④ 앞자리와 뒷자리를 연결.',
+            예제: ['46 × 78 = 3,588 (대각선 값 74, 앞자리 28+7=35, 뒷자리 48+40=88)'] },
+    gen() {
+      for (;;) {
+        const x = rnd(23, 88), y = rnd(23, 88);
+        if (isPlain(x, y)) return [x, y];
+      }
+    },
+    lines: null,
+  },
+  {
+    id: 'dong1', name: '동수1형', icon: '⚡',
+    short: '같은 숫자 + 상대 숫자 합 10 → 1초 암산',
+    card: { 조건: '네 숫자 중 같은 숫자(동수)가 있고, 그 동수의 상대편 두 숫자의 합이 10. 대각선 값의 뒷자리가 0이 되는 특수형.',
+            방법: '대각선 값 = 동수 × 10 이므로 뒷자리는 일의 자리끼리 곱을 그대로 붙이고, 앞자리에는 동수를 더합니다. 십의 자리가 같으면 (십의 자리) × (십의 자리+1).',
+            예제: ['35 × 35 = 1,225 (3×4=12, 5×5=25)', '84 × 86 = 7,224 (8×9=72, 4×6=24)', '36 × 76 = 2,736 (3×7=21에 6을 더해 27, 6×6=36)', '28 × 77 = 2,156 (3×7=21, 8×7=56)'] },
+    gen() { return genDong(10); },
+    lines(x, y) { return dongLines(x, y); },
+  },
+  {
+    id: 'dong2', name: '동수2형', icon: '🔗',
+    short: '같은 숫자 + 상대 합이 9·10·11이 아님',
+    card: { 조건: '네 숫자 중 같은 숫자(동수)가 있지만, 상대편 두 숫자의 합이 10(또는 10에 가까운 9·11)이 아닌 경우.',
+            방법: '① 분배법칙: 대각선 값 = 동수 × (상대 숫자의 합)을 한 번에 구해 기억 → ② 앞자리 확정 (대각선 앞자리와 같은 수가 보이면 상대 숫자에 1을 더해 곱함) → ③ 뒷자리 → ④ 연결 (100이 넘으면 앞자리에 1).',
+            예제: ['44 × 35 = 1,540 (대각선 4×8=32, 앞자리 5×3=15, 뒷자리 20+20=40)', '63 × 65 = 4,095', '37 × 57 = 2,109', '88 × 67 = 5,896'] },
+    gen() { return genDong(null); },
+    lines(x, y) { return dongLines(x, y); },
+  },
+  {
+    id: 'hap9', name: '동수1 응용형', icon: '⚡',
+    short: '같은 숫자 + 상대 합 9 또는 11 (10에 가까움)',
+    card: { 조건: '같은 숫자가 있고 상대 숫자의 합이 10에 가까운 9나 11인 경우. 동수1형처럼 쉽게 풀립니다.',
+            방법: '대각선 값 = 동수 × 10 에서 동수를 빼거나(합 9) 더함(합 11). 동수1형처럼 앞자리를 정하고, 남는 동수만 뒷자리 쪽에 더하거나 뺍니다.',
+            예제: ['67 × 64 = 4,288 (상대 합 11: 60 + 6 = 대각선 값 66, 42 | 28+60=88)', '56 × 46 = 2,576 (상대 합 9: 60 − 6 = 대각선 값 54, 25 | 36+40=76)'] },
+    gen() { return genDong(Math.random() < .5 ? 9 : 11); },
+    lines(x, y) { return dongLines(x, y); },
+  },
+  {
+    id: 'one', name: '1형', icon: '1️⃣',
+    short: '숫자 1이 들어간 곱셈 (11단·10단·51 등)',
+    card: { 조건: '네 숫자 중 1이 들어 있는 경우. 1은 곱해도 자기 자신이라 곱셈이 크게 줄어듭니다.',
+            방법: '· 11단: 상대 두 숫자를 벌리고 사이에 두 수의 합 (넘치면 앞에 1)\n· 10단끼리(1A×1B): (1A + B) × 10 + A×B\n· 일의 자리가 둘 다 1(A1×B1): 대각선 값 = A+B\n· 1형 확장(1A × B1): 대각선 값 = A×B + 1 → 앞자리 = B + 대각선 앞자리, 뒷자리 = 대각선 뒷자리와 A를 그대로 연결. 서로 겹치는 게 없어 가장 쉬운 유형!\n· 51단: 상대 수의 절반 × 100 + 상대 수\n· 그 밖: 1이 있는 대각선은 상대 숫자가 그대로',
+            예제: ['11 × 35 = 385', '11 × 85 = 935', '17 × 18 = 306 (17+8=25 → 250, 7×8=56)', '31 × 51 = 1,581', '51 × 86 = 4,386 (4,300 + 86)', '18 × 71 = 1,278 (1형 확장: 대각선 값 8×7+1 = 57, 앞자리 7+5 = 12, 뒷자리 7과 8을 연결 78)', '13 × 51 = 663', '18 × 87 = 1,566'] },
+    gen() {
+      const k = pick(['11', '1x1', 'x1x1', '51', '1xx1', '1xx1']);   // 1형 확장(1A×B1)을 조금 더 자주
+      if (k === '11') return maybeSwap(11, rnd(2, 9) * 10 + rnd(2, 9));
+      if (k === '1x1') return [rnd(12, 19), rnd(12, 19)];
+      if (k === 'x1x1') return [rnd(2, 9) * 10 + 1, rnd(2, 9) * 10 + 1];
+      if (k === '51') { let y; do y = rnd(23, 98); while (y % 10 === 0 || y === 51) ; return maybeSwap(51, y); }
+      return maybeSwap(10 + rnd(2, 9), rnd(2, 9) * 10 + 1);
+    },
+    lines(x, y) {
+      const L = [];
+      if (x === 11 || y === 11) {
+        const o = x === 11 ? y : x, a = Math.floor(o / 10), b = o % 10, s = a + b;
+        L.push(`11단: 양옆에 ${a} · ${b}, 사이에 ${a}+${b} = ${s}` + (s >= 10 ? ` → 10이 넘으니 앞자리 ${a} + 1 = ${a + 1}` : ''));
+        L.push(`→ <b>${fmt(o * 11)}</b>`);
+      } else if ((x === 51 || y === 51) && !isExt1(x, y)) {
+        const o = x === 51 ? y : x;
+        L.push(`51단: ${o} × 50 = ${o}의 절반 × 100 = ${fmt(o * 50)}`);
+        L.push(`+ ${o} → <b>${fmt(o * 51)}</b>`);
+      } else if (x < 20 && y < 20) {
+        const b = y % 10, a = x % 10;
+        L.push(`10단끼리: ${x} + ${b} = ${x + b} → × 10 = ${(x + b) * 10}`);
+        L.push(`+ 일의 자리끼리 ${a}×${b} = ${a * b} → <b>${fmt(x * y)}</b>`);
+      } else if (isExt1(x, y)) {
+        const t = x < 20 ? x : y, o = t === x ? y : x, a = t % 10, b = Math.floor(o / 10), diag = a * b + 1;
+        const dt = Math.floor(diag / 10), du = diag % 10;
+        L.push(`1형 확장 (${t} × ${o}): 대각선 값 = ${a}×${b} + 1 = <b>${diag}</b>`);
+        L.push(`앞자리: ${b} + 대각선 앞자리 ${dt} = ${b + dt}`);
+        L.push(`뒷자리: 대각선 뒷자리 ${du} · ${a} 그대로 연결 → ${du}${a} <small>(겹치는 게 없어 더할 필요 없음)</small>`);
+        L.push(`→ <b>${fmt(x * y)}</b>`);
+      } else if (x % 10 === 1 && y % 10 === 1) {
+        const a = Math.floor(x / 10), c = Math.floor(y / 10);
+        L.push(`일의 자리가 둘 다 1: 대각선 값 = ${a} + ${c} = ${a + c}`);
+      } else {
+        L.push('1이 있는 대각선은 곱할 필요 없이 상대 숫자가 그대로 옵니다.');
+      }
+      return L;
+    },
+  },
+  {
+    id: 'nine', name: '9형', icon: '💯',
+    short: '9가 들어간 곱셈 (99단·90대·A9×B9 등)',
+    card: { 조건: '네 숫자 중 9가 들어 있는 경우. 100(또는 10의 배수)에 대한 보수를 쓰면 빠릅니다.',
+            방법: '· 99단: (상대 수 − 1) | 상대 수의 100 보수\n· 90대끼리: 두 보수의 합의 보수 | 두 보수의 곱\n· 일의 자리가 둘 다 9: 올림수끼리 곱 − (올림수의 합 − 1)\n· A8 × B9: 올림수끼리 곱 − (올림수의 합 + 8 + 8의 대각선 숫자×10)',
+            예제: ['99 × 35 = 3,465 (34 | 65)', '93 × 95 = 8,835 (보수 7+5=12의 보수 88 | 7×5=35)', '98 × 96 = 9,408', '39 × 59 = 2,301 (2,400 − 99)', '38 × 59 = 2,242 (2,400 − 158)'] },
+    gen() {
+      const k = pick(['99', '9x9x', 'x9x9', 'x8x9']);
+      if (k === '99') { let y; do y = rnd(23, 98); while (y % 10 === 0) ; return maybeSwap(99, y); }
+      if (k === '9x9x') return [rnd(91, 98), rnd(91, 98)];
+      if (k === 'x9x9') return [rnd(2, 8) * 10 + 9, rnd(2, 8) * 10 + 9];
+      return maybeSwap(rnd(2, 8) * 10 + 8, rnd(2, 8) * 10 + 9);
+    },
+    lines(x, y) {
+      const L = [];
+      if (x === 99 || y === 99) {
+        const o = x === 99 ? y : x;
+        L.push(`99단: 앞자리 ${o} − 1 = ${o - 1}, 뒷자리 ${o}의 보수 ${pad2(100 - o)}`);
+        L.push(`→ <b>${fmt(o * 99)}</b>`);
+      } else if (x > 90 && y > 90) {
+        const a = 100 - x, b = 100 - y;
+        L.push(`90대끼리: 보수 ${a}, ${b} → 보수의 합 ${a + b}, 그 보수 → 앞자리 ${100 - a - b}`);
+        L.push(`보수의 곱 ${a}×${b} = ${pad2(a * b)} → <b>${fmt(x * y)}</b>`);
+      } else if (x % 10 === 9 && y % 10 === 9) {
+        const X = x + 1, Y = y + 1;
+        L.push(`일의 자리가 둘 다 9: 올림수 ${X} × ${Y} = ${fmt(X * Y)}`);
+        L.push(`− (${X} + ${Y} − 1 = ${X + Y - 1}) → <b>${fmt(x * y)}</b>`);
+      } else {
+        const e = x % 10 === 8 ? x : y, n = x % 10 === 8 ? y : x;   // e: 8로 끝나는 수, n: 9로 끝나는 수
+        const X = e + 2, Y = n + 1, partner = Math.floor(n / 10);
+        L.push(`A8 × B9: 올림수 ${X} × ${Y} = ${fmt(X * Y)}`);
+        L.push(`빼는 수: ${X} + ${Y} = ${X + Y}, + 8 + 8의 대각선 숫자 ${partner}(${partner * 10}) = ${X + Y + 8 + partner * 10}`);
+        L.push(`${fmt(X * Y)} − ${X + Y + 8 + partner * 10} → <b>${fmt(x * y)}</b>`);
+      }
+      return L;
+    },
+  },
+  {
+    id: 't25', name: '25형', icon: '🍀',
+    short: '25(또는 26)를 곱할 때 — 4로 나누기',
+    card: { 조건: '한쪽이 25인 곱셈. 25는 100의 4분의 1이라 상대 숫자를 4로 나눕니다. 26이면 25로 풀고 상대 숫자를 한 번 더 더합니다.',
+            방법: '상대 숫자 ÷ 4 → 몫 × 100 + 나머지(1이면 25, 2면 50, 3이면 75)',
+            예제: ['25 × 31 = 775 (31÷4 = 7 나머지 3 → 700 + 75)', '25 × 48 = 1,200', '26 × 35 = 910 (25×35 = 875 + 35)', '26 × 52 = 1,352 (1,300 + 52)'] },
+    gen() {
+      let y; do y = rnd(12, 98); while (y % 10 === 0 || y === 25 || y === 26) ;
+      return maybeSwap(Math.random() < .7 ? 25 : 26, y);
+    },
+    lines(x, y) {
+      const t = (x === 25 || x === 26) ? x : y, o = t === x ? y : x;
+      const q = Math.floor(o / 4), r = o % 4, base = o * 25;
+      const L = [`25형: ${o} ÷ 4 = 몫 ${q}, 나머지 ${r} → ${q * 100} + ${[0, 25, 50, 75][r]} = ${fmt(base)}`];
+      if (t === 26) L.push(`26이니 상대 숫자 ${o}를 한 번 더: ${fmt(base)} + ${o} → <b>${fmt(base + o)}</b>`);
+      else L.push(`→ <b>${fmt(base)}</b>`);
+      return L;
+    },
+  },
+  {
+    id: 't37', name: '37형', icon: '🔮',
+    short: '37 × 3 = 111의 비밀',
+    card: { 조건: '한쪽이 37인 곱셈. 37 × 3 = 111 이라는 원리를 씁니다.',
+            방법: '상대 숫자가 3의 배수이면 3으로 나눈 몫의 두 숫자를 양옆으로 벌리고, 그 사이에 두 숫자의 합을 두 번 넣습니다.',
+            예제: ['37 × 48 = 1,776 (48÷3 = 16 → 1 _ _ 6 사이에 7, 7)', '37 × 45 = 1,665 (45÷3 = 15 → 1 6 6 5)'] },
+    gen() {
+      const ok = [];
+      for (let q = 12; q <= 32; q++) { const a = Math.floor(q / 10), b = q % 10; if (b && a + b < 10 && q * 3 !== 37) ok.push(q * 3); }
+      return maybeSwap(37, pick(ok));
+    },
+    lines(x, y) {
+      const o = x === 37 ? y : x, q = o / 3, a = Math.floor(q / 10), b = q % 10, s = a + b;
+      return [`${o} ÷ 3 = ${q}`, `양옆에 ${a} · ${b}, 사이에 ${a}+${b} = ${s} 두 번 → ${a} ${s} ${s} ${b}`, `→ <b>${fmt(x * y)}</b>`];
+    },
+  },
+  {
+    id: 't20', name: '20단', icon: '🎯',
+    short: '20대 숫자끼리의 곱셈',
+    card: { 조건: '두 수가 모두 20대인 곱셈 (2A × 2B).',
+            방법: '한쪽 수에 상대 수의 일의 자리를 더하고 × 20, 여기에 일의 자리끼리 곱을 더합니다.',
+            예제: ['28 × 27 = 756 (28+7 = 35 → 700, 8×7 = 56)', '28 × 29 = 812 (37 → 740, 72)'] },
+    gen() { return [rnd(21, 29), rnd(21, 29)]; },
+    lines(x, y) {
+      const a = x % 10, b = y % 10;
+      return [`${x} + ${b} = ${x + b} → × 20 = ${(x + b) * 20}`, `+ 일의 자리끼리 ${a}×${b} = ${a * b} → <b>${fmt(x * y)}</b>`];
+    },
+  },
+  {
+    id: 'virt', name: '가상 동수형', icon: '🪄',
+    short: '같은 수는 없지만 1~2 차이 → 동수로 맞추기',
+    card: { 조건: '같은 숫자는 없지만, 마주 보는 두 숫자의 차이가 1이나 2인 경우.',
+            방법: '① 큰 숫자를 머릿속에서 1이나 2 줄여 가상의 동수로 맞춤 → ② 분배법칙으로 임시 대각선 값 → ③ 줄인 만큼 그 숫자의 대각선 상대 숫자를 더해 원상복구 (1을 줄였으면 1배, 2를 줄였으면 2배) → ④ 기본 단계.',
+            예제: ['34 × 75 = 2,550 (75를 74로: 4×10 = 40, + 5의 상대 3 → 대각선 값 43)', '34 × 67 = 2,278 (67을 66으로: 6×7 = 42, + 7의 상대 3 → 45)', '45 × 83 = 3,735 (45를 44로: 4×11 = 44, + 5의 상대 8 → 대각선 값 52)'] },
+    gen() {
+      for (;;) {
+        const x = rnd(23, 88), y = rnd(23, 88);
+        if (!hasSpecial(x, y) && !findDongsu(x, y).length && virtPair(x, y)) return [x, y];
+      }
+    },
+    lines(x, y) {
+      const v = virtPair(x, y);
+      return [`${v.text}`, `임시 대각선 값 ${v.base}, + ${v.fix} → 대각선 값 <b>${v.diag}</b>`];
+    },
+  },
+  {
+    id: 'check', name: '체크형', icon: '✔️',
+    short: '빌딩숲인데 일의 자리에 9나 8이 보일 때',
+    card: { 조건: '숫자 차이가 커서 분배법칙을 쓰기 어려운 "빌딩숲"이지만, 일의 자리에 9나 8이 있을 때.',
+            방법: '9를 10 − 1로 봅니다: 9가 없는 대각선 곱에서 9의 대각선 상대 숫자를 빼고, 그 상대 숫자의 10배를 더해 대각선 값을 구합니다. (8이면 상대 숫자를 두 번 뺌)',
+            예제: ['49 × 73 = 3,577 (4×3 = 12에서 7을 빼면 5, 70을 더해 대각선 값 75)', '69 × 83 = 5,727 (대각선 값 90)', '89 × 76 = 6,764 (48 − 7 = 41, + 70 → 111)'] },
+    gen() {
+      for (;;) {
+        const x = rnd(3, 8) * 10 + pick([8, 9]), y = rnd(23, 88);
+        const r = Math.random() < .5 ? [x, y] : [y, x];
+        if (!findDongsu(r[0], r[1]).length && !virtPair(r[0], r[1]) && !digits(r[0], r[1]).includes(1) && y % 10 !== 9 && y % 10 !== 8 && y % 10 !== 0) return r;
+      }
+    },
+    lines(x, y) {
+      const [A, B, C, D] = digits(x, y);
+      // 9(또는 8)가 B 자리면 상대는 C, 다른 대각선은 A×D / D 자리면 상대는 A, 다른 대각선은 B×C
+      const atB = B === 9 || B === 8, k = atB ? B : D, partner = atB ? C : A, other = atB ? A * D : B * C;
+      const m = 10 - k, base = other - partner * m, diag = base + partner * 10;
+      return [`${k} = 10 − ${m}: 다른 대각선 ${other} − ${partner}${m > 1 ? '×' + m : ''} = ${base}`,
+              `+ ${partner}의 10배 ${partner * 10} → 대각선 값 <b>${diag}</b>`];
+    },
+  },
+];
+const TYPE = Object.fromEntries(TYPES.map(t => [t.id, t]));
+
+/* 1형 확장: 한쪽은 1A(12~19), 다른 쪽은 B1(21~91) */
+function isExt1(x, y) {
+  const one = v => v > 11 && v < 20, endsOne = v => v % 10 === 1 && v > 20;
+  return (one(x) && endsOne(y)) || (one(y) && endsOne(x));
+}
+/* 특별 숫자 판별 */
+function hasSpecial(x, y) {
+  const d = digits(x, y);
+  return d.includes(0) || d.includes(1) || d.includes(9) || [25, 26, 37].includes(x) || [25, 26, 37].includes(y) ||
+         (x < 30 && y < 30) || x === y;
+}
+/* 마주 보는 두 숫자 차이 1~2 → 가상 동수 풀이 */
+function virtPair(x, y) {
+  const [A, B, C, D] = digits(x, y);
+  // 각 경우: 줄일 숫자 big → small, 줄인 숫자의 대각선 상대 partner, 나머지 둘의 합 s
+  const cands = [
+    // A·C (십의 자리끼리): 동수 A=C면 대각선 = A×(B+D)
+    { a: A, b: C, s: B + D, pa: D, pb: B, label: '십의 자리' },
+    { a: B, b: D, s: A + C, pa: C, pb: A, label: '일의 자리' },
+    { a: A, b: B, s: C + D, pa: D, pb: C, label: `${x}의 두 숫자` },
+    { a: C, b: D, s: A + B, pa: B, pb: A, label: `${y}의 두 숫자` },
+  ];
+  // 차이 1인 쪽 먼저, 그다음 숫자가 높은 쪽을 동수로 맞춤 (상대 합이 작아 계산이 쉬움)
+  cands.forEach(c => c.d = Math.abs(c.a - c.b));
+  cands.sort((p, q) => (p.d - q.d) || (p.s - q.s));
+  for (const c of cands) {
+    const d = Math.abs(c.a - c.b);
+    if (d < 1 || d > 2) continue;
+    const small = Math.min(c.a, c.b), big = Math.max(c.a, c.b), partner = c.a > c.b ? c.pa : c.pb;
+    const base = small * c.s, fix = partner * d, diag = base + fix;
+    if (diag !== A * D + B * C) continue;
+    return { base, fix, diag, text: `${c.label} ${c.a}·${c.b}: 가상 동수 ${big} → ${small}, ${small} × ${c.s} = ${base}` + (d === 2 ? ` (2 줄였으니 대각선 상대 ${partner} × 2)` : ` (줄인 ${big}의 대각선 상대 ${partner})`) };
+  }
+  return null;
+}
+function isPlain(x, y) {
+  if (hasSpecial(x, y) || findDongsu(x, y).length || virtPair(x, y)) return false;
+  const [, B, , D] = digits(x, y);
+  return B !== 8 && D !== 8;
+}
+/* 동수형 출제: sum=10 → 동수1형, 9 → 합9형, null → 동수2형(합이 9·10이 아님) */
+function genDong(sum) {
+  for (;;) {
+    const kind = rnd(0, 3), n = rnd(2, 9);
+    let p, q;
+    if (sum) { p = rnd(1, sum - 1); q = sum - p; } else { p = rnd(2, 9); q = rnd(2, 9); if (p + q >= 9 && p + q <= 11) continue; }
+    if (!p || !q || p > 9 || q > 9) continue;
+    let x, y;
+    if (kind === 0) { x = n * 10 + p; y = n * 10 + q; }        // 십의 자리가 같음
+    else if (kind === 1) { x = p * 10 + n; y = q * 10 + n; }   // 일의 자리가 같음
+    else { x = n * 11; y = p * 10 + q; }                       // 한 수의 두 숫자가 같음
+    if (x < 21 || y < 21) continue;
+    if ([11, 25, 26, 37, 99, 51].includes(x) || [11, 25, 26, 37, 99, 51].includes(y)) continue;
+    const sums = findDongsu(x, y).map(d => d.p + d.q);
+    if (sum !== 10 && sums.includes(10)) continue;                       // 동수1형이 섞이지 않게
+    if (sum === null && sums.some(v => v >= 9 && v <= 11)) continue;    // 동수2형엔 응용형도 빼기
+    return maybeSwap(x, y);
+  }
+}
+function dongLines(x, y) {
+  const all = findDongsu(x, y);                    // 합이 10 → 9 → 그 밖 순서로 고름
+  const ds = all.find(d => d.p + d.q === 10) || all.find(d => d.p + d.q === 9 || d.p + d.q === 11) || all[0];
+  const s = ds.p + ds.q, diag = ds.n * s;
+  const L = [`동수 ${ds.n} (${ds.where}), 상대 숫자 ${ds.p} + ${ds.q} = ${s} → 대각선 값 ${ds.n} × ${s} = <b>${diag}</b>` +
+    (s === 9 ? ` <small>(${ds.n * 10} − ${ds.n})</small>` : s === 11 ? ` <small>(${ds.n * 10} + ${ds.n})</small>` : '')];
+  if (s === 10) {
+    const [A, , C] = digits(x, y), p = principle(x, y);
+    L.push(`대각선 뒷자리가 0 → 앞자리 ${A}×${C} + ${ds.n} = ${p.front}` + (A === C ? ` <small>(= ${A}×${A + 1})</small>` : ''));
+    L.push(`뒷자리는 일의 자리 곱 그대로 ${pad2(p.b0)} → <b>${fmt(x * y)}</b>`);
+  }
+  return L;
+}
+
+/* 한 문제의 전체 풀이 HTML */
+function solutionHTML(x, y, typeId) {
+  const t = TYPE[typeId];
+  let h = '';
+  const tl = t && t.lines ? t.lines(x, y) : null;
+  if (tl && tl.length) h += `<div class="h">${t.icon} ${t.name} 지름길</div>` + tl.map(s => `<div>${s}</div>`).join('');
+  h += `<div class="h">✖️ 원칙으로 풀면</div>` + principleLines(x, y).map(s => `<div>${s}</div>`).join('');
+  return h;
+}
+
+/* ===== 저장·효과음 ===== */
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let store = JSON.parse(load('gukdanbi-diag', '{"best":null,"types":{}}'));
+function persist() { save('gukdanbi-diag', JSON.stringify(store)); }
+
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('key'); };
+const SOUNDS = {
+  key:   [[660, .03]],
+  right: [[523, .09], [659, .09], [784, .16]],
+  wrong: [[262, .15, 'triangle'], [220, .22, 'triangle']],
+  done:  [[523, .12], [659, .12], [784, .12], [1047, .35]],
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 화면 도우미 ===== */
+const $ = id => document.getElementById(id);
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.hidden = s.id !== id); window.scrollTo(0, 0); }
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = goMenu);
+function goMenu() {
+  show('sMenu');
+  $('menuRecord').textContent = store.best ? `암산 도전 최고 기록: ${store.best.time}초 · 별 ${'★'.repeat(store.best.stars)}` : '';
+}
+function probHTML(x, y, typeName) {
+  const [A, B, C, D] = digits(x, y);
+  return `<div class="grid">
+      <svg viewBox="0 0 150 150" preserveAspectRatio="none">
+        <line class="bar b1" x1="28" y1="28" x2="28" y2="122"/><line class="bar b2" x1="122" y1="28" x2="122" y2="122"/>
+        <line class="x x1" x1="28" y1="28" x2="122" y2="122"/><line class="x x2" x1="122" y1="28" x2="28" y2="122"/>
+      </svg>
+      <div class="d d0">${A}</div><div class="d d1">${B}</div><div class="d d2">${C}</div><div class="d d3">${D}</div>
+    </div>
+    <div class="eq">${x} × ${y}${typeName ? `<small>${typeName}</small>` : ''}</div>`;
+}
+function light(el, which) {        // which: 'x' | 'b1' | 'b2' | 'all' | ''
+  el.querySelectorAll('line').forEach(l => {
+    const on = which === 'all' || (which === 'x' && l.classList.contains('x')) || l.classList.contains(which);
+    l.classList.toggle('on', on);
+  });
+}
+/* 숫자 버튼 */
+const pads = {};
+document.querySelectorAll('[data-pad]').forEach(p => {
+  const id = p.dataset.pad;
+  p.innerHTML = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', '확인'].map(k =>
+    `<button data-k="${k}" class="${k === '확인' ? 'ok' : k === '⌫' ? 'del' : ''}">${k}</button>`).join('');
+  p.querySelectorAll('button').forEach(b => b.onclick = () => padPress(id, b.dataset.k));
+});
+function padPress(id, k) {
+  const box = id === 'f' ? $('fBox') : $('qBox');
+  if (k === '확인') { (id === 'f' ? followCheck : quizCheck)(); return; }
+  beep('key');
+  box.classList.remove('bad', 'good');
+  if (k === '⌫') box.textContent = box.textContent.slice(0, -1);
+  else if (box.textContent.length < 5) box.textContent += k;
+}
+document.addEventListener('keydown', e => {
+  if (!introDone) { if (e.key === 'Enter' || e.key === ' ') endIntro(); return; }
+  const id = !$('sFollow').hidden ? 'f' : !$('sQuiz').hidden ? 'q' : null;
+  if (!id) return;
+  if (/^[0-9]$/.test(e.key)) padPress(id, e.key);
+  else if (e.key === 'Backspace') padPress(id, '⌫');
+  else if (e.key === 'Enter') { if (id === 'q' && !$('qNext').hidden) $('qNext').click(); else padPress(id, '확인'); }
+});
+
+/* ===== ① 원칙 따라 하기 ===== */
+let F = null;
+const STEP_INFO = [
+  { t: '대각선 값', s: '빨간 ✕ 두 곱의 합 — 빨간 숫자만 입력 (뒤의 0은 저절로)', light: 'x', key: 'diag', tail: '0' },
+  { t: '앞자리 확정', s: '십의 자리끼리 곱 + 대각선 앞자리 — 앞자리만 입력 (00은 저절로)', light: 'b1', key: 'front', tail: '00' },
+  { t: '뒷자리 확정', s: '일의 자리끼리 곱 + 대각선 뒷자리(×10)', light: 'b2', key: 'back', tail: '' },
+  { t: '연결해서 정답', s: '빨간 줄에 맞춰 앞자리와 뒷자리를 합침', light: 'all', key: 'ans', tail: '' },
+];
+/* 자릿값 칸: 천 백 │ 십 일 — 빨간 세로줄은 백과 십 사이. parts = [[글자, 클래스], ...] 를 오른쪽(일의 자리)부터 채움 */
+function placeHTML(parts) {
+  const chars = [];
+  parts.forEach(([txt, cls]) => [...String(txt)].forEach(ch => chars.push([ch, cls])));
+  while (chars.length < 4) chars.unshift(['', '']);
+  return '<span class="pv">' + chars.slice(-4).map(([ch, cls], i) => `<i class="c${i} ${cls}">${ch}</i>`).join('') + '</span>';
+}
+function stepValueHTML(i) {
+  const p = F.p, dt = Math.floor(p.diag / 10), du = p.diag % 10;
+  if (i === 0) return { f: '', v: placeHTML([[p.diag, 'red'], ['0', 'zero']]) };
+  if (i === 1) return { f: `(${p.f0}+<span class="red">${dt}</span>)`, v: placeHTML([[p.front, ''], ['00', 'dim']]) };
+  if (i === 2) return { f: `(${p.b0}+<span class="red">${du * 10}</span>)`, v: placeHTML([[p.back, '']]) };
+  return { f: '', v: placeHTML([[p.ans, '']]) };
+}
+function drawRedLine() {                               // 네 줄을 꿰는 빨간 세로줄 (백과 십 사이)
+  const box = $('fSteps'), cell = box.querySelector('.c2'), line = $('fLine');
+  if (!cell || !line) return;
+  const bx = box.getBoundingClientRect(), cx = cell.getBoundingClientRect();
+  line.style.left = (cx.left - bx.left - 1) + 'px';
+}
+window.addEventListener('resize', () => { if (!$('sFollow').hidden) drawRedLine(); });
+function newFollow() {
+  const t = pick(TYPES);
+  const [x, y] = t.gen();
+  F = { x, y, p: principle(x, y), step: 0, hint: 0 };
+  $('fProb').innerHTML = probHTML(x, y);
+  $('fSteps').innerHTML = STEP_INFO.map((s, i) => `<div class="step" id="fs${i}"><span class="n">${i + 1}</span><span class="t">${s.t}<small>${s.s}</small></span><span class="fm"></span>${placeHTML([])}</div>`).join('') + '<span class="redline" id="fLine"></span>';
+  $('fBox').textContent = ''; $('fBox').className = 'box';
+  followStep();
+  show('sFollow');
+  drawRedLine();
+}
+function followStep() {
+  STEP_INFO.forEach((s, i) => $('fs' + i).classList.toggle('now', i === F.step));
+  const tail = STEP_INFO[F.step] ? STEP_INFO[F.step].tail : '';
+  $('fBox').classList.toggle('tail0', tail === '0');      // 입력 칸 뒤에 저절로 붙는 0 / 00
+  $('fBox').classList.toggle('tail00', tail === '00');
+  light($('fProb'), STEP_INFO[F.step] ? STEP_INFO[F.step].light : 'all');
+  F.hint = 0;
+  $('fSay').textContent = F.step < 4 ? `${F.step + 1}단계: ${STEP_INFO[F.step].t}을(를) 입력하세요` : '';
+  drawRedLine();
+}
+function followCheck() {
+  if (F.step >= 4) return;
+  const v = Number($('fBox').textContent);
+  if ($('fBox').textContent === '') return;
+  const want = F.p[STEP_INFO[F.step].key];
+  if (v === want) {
+    beep('right');
+    const el = $('fs' + F.step), sv = stepValueHTML(F.step);
+    el.classList.remove('now'); el.classList.add('done');
+    el.querySelector('.fm').innerHTML = sv.f;
+    el.querySelector('.pv').outerHTML = sv.v;
+    $('fBox').textContent = '';
+    F.step++;
+    if (F.step === 4) {
+      $('fBox').textContent = String(F.p.ans); $('fBox').className = 'box good';
+      light($('fProb'), 'all');
+      $('fSay').textContent = `🎉 정답! ${F.x} × ${F.y} = ${fmt(F.p.ans)}`;
+      beep('done');
+      STEP_INFO.forEach((s, i) => $('fs' + i).classList.remove('now'));
+      drawRedLine();
+    } else followStep();
+  } else {
+    beep('wrong');
+    $('fBox').classList.add('bad');
+    $('fSay').textContent = '다시 한번 해 보세요. 막히면 💡 힌트를 누르세요';
+  }
+}
+function followHint() {
+  if (!F || F.step >= 4) return;
+  const p = F.p, dt = Math.floor(p.diag / 10), du = p.diag % 10;
+  const H = [
+    [`${p.A}×${p.D} + ${p.B}×${p.C} = ?`, `${p.A * p.D} + ${p.B * p.C} = ${p.diag}`],
+    [`${p.A}×${p.C} + 대각선 앞자리 ${dt} = ?`, `${p.f0} + ${dt} = ${p.front}`],
+    [`${p.B}×${p.D} + 대각선 뒷자리 ${du}(${du * 10}) = ?`, `${p.b0} + ${du * 10} = ${p.back}`],
+    [`앞자리 ${p.front}, 뒷자리 ${p.back}` + (p.back >= 100 ? ' — 뒷자리가 100이 넘으니 앞자리에 1을 올려요' : ' — 나란히 붙이면?'), `${p.finalFront} | ${pad2(p.finalBack)} → ${p.ans}`],
+  ][F.step];
+  $('fSay').textContent = '💡 ' + H[Math.min(F.hint, 1)];
+  F.hint++;
+}
+$('goFollow').onclick = newFollow;
+$('fNext').onclick = newFollow;
+$('fHint').onclick = followHint;
+
+/* ===== ② 유형 목록·카드 ===== */
+function showTypes() {
+  $('typeList').innerHTML = TYPES.map(t => {
+    const r = store.types[t.id];
+    return `<button data-t="${t.id}"><b>${t.icon} ${t.name}</b><small>${t.short}</small>${r ? `<small class="best">최고 ${r}/10</small>` : ''}</button>`;
+  }).join('');
+  $('typeList').querySelectorAll('button').forEach(b => b.onclick = () => showCard(b.dataset.t));
+  show('sTypes');
+}
+let cardType = null;
+function showCard(id) {
+  cardType = id; const t = TYPE[id], c = t.card;
+  $('cardTitle').textContent = `${t.icon} ${t.name}`;
+  $('cardBody').innerHTML = `<div class="k">조건</div><div>${c.조건}</div><div class="k">방법</div><div>${c.방법.replace(/\n/g, '<br>')}</div>` +
+    `<div class="k">예제</div>` + c.예제.map(e => `<div class="ex">${e}</div>`).join('');
+  show('sCard');
+}
+$('goTypes').onclick = showTypes;
+$('cardBack').onclick = showTypes;
+$('cardStart').onclick = () => startQuiz('type', cardType);
+
+/* ===== ②·③ 문제 풀기 ===== */
+let Q = null, timer = null;
+function makeSet(mode, typeId) {
+  const set = [], seen = new Set();
+  // 암산 도전: 여러 유형을 골고루 (기본형·동수형이 조금 더 자주)
+  const pool = ['basic', 'basic', 'dong1', 'dong1', 'dong2', 'dong2', 'hap9', 'one', 'nine', 't25', 't37', 't20', 'virt', 'check'];
+  let guard = 0;
+  while (set.length < 10 && guard++ < 500) {
+    const id = mode === 'type' ? typeId : pick(pool);
+    const [x, y] = TYPE[id].gen();
+    const key = Math.min(x, y) + 'x' + Math.max(x, y);
+    if (seen.has(key)) continue;
+    seen.add(key); set.push({ x, y, id });
+  }
+  return set;
+}
+function startQuiz(mode, typeId) {
+  Q = { mode, typeId, set: makeSet(mode, typeId), i: 0, right: 0, wrong: [], t0: Date.now(), answered: false };
+  $('qMode').textContent = mode === 'type' ? `${TYPE[typeId].icon} ${TYPE[typeId].name}` : '⏱️ 암산 도전';
+  clearInterval(timer);
+  if (mode === 'challenge') timer = setInterval(() => { $('qTime').textContent = `⏱ ${Math.floor((Date.now() - Q.t0) / 1000)}초`; }, 250);
+  else $('qTime').textContent = '';
+  showQ(); show('sQuiz');
+}
+function showQ() {
+  const p = Q.set[Q.i];
+  $('qNum').textContent = Q.i + 1; $('qRight').textContent = Q.right;
+  $('qProb').innerHTML = probHTML(p.x, p.y, Q.mode === 'type' ? '' : '');
+  light($('qProb'), '');
+  $('qBox').textContent = ''; $('qBox').className = 'box';
+  $('qSay').textContent = Q.mode === 'type' ? '답을 입력하고 확인을 누르세요' : '암산으로 답만 입력!';
+  $('qSol').hidden = true; $('qNext').hidden = true; $('qShow').hidden = false;
+  Q.answered = false; Q.peeked = false;
+}
+function quizCheck() {
+  if (Q.answered || $('qBox').textContent === '') return;
+  const p = Q.set[Q.i], v = Number($('qBox').textContent), ok = v === p.x * p.y;
+  Q.answered = true;
+  if (ok) {                                    // 풀이를 보고 풀어도 맞히면 정답으로 침
+    Q.right++; beep('right'); $('qBox').classList.add('good');
+    $('qSay').textContent = `딩동댕! ${p.x} × ${p.y} = ${fmt(p.x * p.y)}` + (Q.peeked ? ' (풀이 보고 풀었어요)' : '');
+  } else {
+    beep('wrong');
+    $('qBox').classList.add('bad');
+    Q.wrong.push(p);
+    $('qSay').textContent = `정답은 ${fmt(p.x * p.y)} — 풀이를 확인해 보세요`;
+    $('qSol').innerHTML = solutionHTML(p.x, p.y, p.id); $('qSol').hidden = false;
+  }
+  $('qRight').textContent = Q.right;
+  light($('qProb'), 'all');
+  $('qShow').hidden = true; $('qNext').hidden = false;
+  $('qNext').textContent = Q.i === 9 ? '결과 보기 ▶' : '다음 문제 ▶';
+}
+$('qShow').onclick = () => {
+  const p = Q.set[Q.i];
+  Q.peeked = true;
+  $('qSol').innerHTML = solutionHTML(p.x, p.y, p.id); $('qSol').hidden = false;
+  light($('qProb'), 'all');
+};
+$('qNext').onclick = () => { if (Q.i === 9) finishQuiz(); else { Q.i++; showQ(); } };
+$('quizBack').onclick = () => { clearInterval(timer); Q.mode === 'type' ? showCard(Q.typeId) : goMenu(); };
+
+function finishQuiz() {
+  clearInterval(timer);
+  const sec = Math.floor((Date.now() - Q.t0) / 1000);
+  let stars = 0, title, text;
+  if (Q.mode === 'challenge') {
+    stars = Q.right === 10 ? (sec <= 90 ? 3 : sec <= 180 ? 2 : 1) : Q.right >= 7 ? 1 : 0;
+    title = Q.right === 10 ? '🎉 10문제 모두 맞혔습니다!' : `${Q.right}문제 맞혔습니다`;
+    text = `걸린 시간 ${sec}초`;
+    if (Q.right === 10 && (!store.best || sec < store.best.time)) { store.best = { time: sec, stars }; text += ' · 🏆 최고 기록!'; }
+  } else {
+    const t = TYPE[Q.typeId];
+    title = `${t.icon} ${t.name} — ${Q.right} / 10`;
+    text = Q.right === 10 ? '이 유형은 완벽합니다!' : Q.right >= 7 ? '잘하셨어요! 조금만 더 연습하면 완벽해요' : '카드 설명을 한 번 더 보고 다시 도전해 보세요';
+    stars = Q.right === 10 ? 3 : Q.right >= 7 ? 2 : Q.right >= 4 ? 1 : 0;
+    store.types[Q.typeId] = Math.max(store.types[Q.typeId] || 0, Q.right);
+  }
+  persist();
+  $('rTitle').textContent = title; $('rText').textContent = text;
+  $('rStars').textContent = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+  // 10문제 모두 맞히면 국단비님의 꽃 선물
+  const prize = Q.right === 10 && typeof FLOWERS !== 'undefined' && FLOWERS.length ? pick(FLOWERS) : null;
+  $('rPrize').hidden = !prize;
+  if (prize) { $('rImg').src = 'assets/img/flowers/' + prize.file; $('rName').textContent = '🎁 국단비님의 선물 · 🌸 ' + prize.name; }
+  $('rMiss').innerHTML = Q.wrong.length ? '<b>다시 볼 문제</b><br>' + Q.wrong.map(p => `${p.x} × ${p.y} = ${fmt(p.x * p.y)} <small>(${TYPE[p.id].name})</small>`).join('<br>') : '';
+  beep(Q.right === 10 ? 'done' : 'right');
+  show('sResult');
+}
+$('rMenu').onclick = goMenu;
+$('rAgain').onclick = () => startQuiz(Q.mode, Q.typeId);
+$('goChallenge').onclick = () => startQuiz('challenge');
+
+/* ===== 환영 장면 ===== */
+const intro = $('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true; intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; }, 450);
+}
+intro.onclick = endIntro;
+setTimeout(endIntro, 3500);
+goMenu();
+</script>
+</body>
+</html>

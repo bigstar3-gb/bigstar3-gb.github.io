@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 무슨 꽃일까?</title>
+  <meta name="description" content="국단비 놀이터 — 확대된 꽃 사진을 보고 이름을 맞혀 나만의 꽃밭을 가꾸는 게임">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --green:#3f9b5a; --purple:#c9a4ff;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      -webkit-user-select:none;user-select:none;touch-action:manipulation}
+    a{color:inherit;text-decoration:none}
+    button{font-family:var(--font);cursor:pointer}
+
+    /* 상단 띠 */
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line)}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;font-size:20px}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{flex:1;width:100%;max-width:720px;display:flex;flex-direction:column;padding:12px 4vw 16px;gap:12px;position:relative}
+
+    /* 위 정보 줄 */
+    .info{display:flex;align-items:center;gap:10px}
+    .info .box{flex:1;background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center}
+    .info .label{font-size:13px;color:var(--muted)}
+    .info .val{font-size:22px;font-weight:800;line-height:1.3}
+    .info .val small{font-size:15px;color:var(--muted);font-weight:600}
+
+    /* 사진 창 */
+    .view{position:relative;width:100%;aspect-ratio:4/3;background:#1a1411;border:2px solid var(--red);border-radius:10px;overflow:hidden}
+    .frame{position:absolute;transition:transform .9s ease}
+    .frame img{width:100%;height:100%;display:block}
+    .steps{position:absolute;left:10px;top:10px;display:flex;gap:6px}
+    .steps i{width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.3)}
+    .steps i.on{background:var(--accent)}
+    .pts{position:absolute;right:10px;top:8px;background:rgba(0,0,0,.55);padding:3px 12px;border-radius:20px;font-weight:800;font-size:17px}
+    .result{position:absolute;left:0;right:0;bottom:0;padding:12px 14px;background:linear-gradient(transparent,rgba(0,0,0,.85));
+      font-size:22px;font-weight:800;text-align:center}
+    .result small{display:block;font-size:16px;font-weight:600;color:var(--muted)}
+    .result[hidden]{display:none}
+
+    /* 보기 버튼 */
+    .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .choices button{min-height:64px;padding:8px;border-radius:14px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;
+      font-size:21px;font-weight:800;word-break:keep-all;line-height:1.25}
+    .choices button:disabled{cursor:default}
+    .choices button.right{background:var(--green);border-color:var(--green)}
+    .choices button.wrong{background:var(--red);border-color:var(--red)}
+    .choices button.dim{opacity:.45}
+    .next{height:58px;border-radius:14px;border:none;background:var(--accent);color:var(--wood-dark);font-size:20px;font-weight:800}
+    .next[hidden]{display:none}
+
+    /* 지금 가꾸는 꽃밭 (작은 사진 줄) */
+    .bed{display:flex;gap:6px;overflow-x:auto;min-height:52px;padding:4px 2px;border-top:1px dashed var(--line)}
+    .bed img{width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--purple);flex:none;animation:pop .5s ease}
+    .bed .empty{width:48px;height:48px;border-radius:50%;border:2px dashed rgba(255,255,255,.2);flex:none}
+    @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+
+    /* 덮개 공통 (환영·시작·완성) */
+    .layer{position:fixed;inset:56px 0 0 0;z-index:5;background:var(--wood);display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:20px 5vw;gap:14px;overflow-y:auto}
+    .layer[hidden]{display:none}
+    .layer h2{font-size:clamp(24px,6vw,32px);color:var(--accent)}
+    .layer p{font-size:18px;color:var(--muted);line-height:1.7;word-break:keep-all}
+    .big{padding:16px 40px;border-radius:40px;border:none;background:var(--red);color:#fff;font-size:21px;font-weight:800}
+    .ghost{padding:12px 28px;border-radius:40px;border:1.5px solid #fff;background:none;color:#fff;font-size:17px;font-weight:700}
+
+    /* 환영 장면 */
+    .intro{background:#1a1411;cursor:pointer}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;color:#fff;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    /* 시작 화면 */
+    .howto{background:var(--wood-dark);border:1px solid var(--line);border-radius:14px;padding:14px 18px;text-align:left;max-width:440px}
+    .howto p{font-size:17px}
+    .size{display:flex;gap:8px}
+    .size button{padding:10px 18px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:18px;font-weight:700}
+    .size button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .record{font-size:16px;color:var(--muted)}
+
+    /* 꽃밭 완성 화면 */
+    .done{justify-content:flex-start}
+    .garden{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px;width:100%;max-width:680px}
+    .garden figure{background:var(--wood-dark);border:1px solid var(--line);border-radius:12px;overflow:hidden;animation:pop .5s ease both}
+    .garden img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+    .garden figcaption{font-size:15px;font-weight:700;padding:5px 4px;word-break:keep-all}
+    .done .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding-bottom:10px}
+
+    @media (max-width:640px){
+      .top h1 .long{display:none}
+      .choices button{min-height:58px;font-size:19px}
+      .info .val{font-size:19px}
+    }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1>🌸 <span class="long">국단비 놀이터 · </span>무슨 꽃일까?</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <div class="info">
+    <div class="box"><div class="label">꽃밭</div><div class="val" id="count">0<small>/15</small></div></div>
+    <div class="box"><div class="label">점수</div><div class="val" id="score">0</div></div>
+    <div class="box"><div class="label">최고 점수</div><div class="val" id="best">0</div></div>
+  </div>
+
+  <div class="view" id="view">
+    <div class="frame" id="frame"><img id="photo" alt="무슨 꽃일까요?"></div>
+    <div class="steps" id="steps"><i></i><i></i><i></i><i></i></div>
+    <div class="pts" id="pts">400점</div>
+    <div class="result" id="result" hidden></div>
+  </div>
+
+  <div class="choices" id="choices"></div>
+  <button class="next" id="nextBtn" hidden>다음 꽃 ▶</button>
+
+  <div class="bed" id="bed"></div>
+</main>
+
+<!-- 환영 장면 -->
+<div class="layer intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<!-- 시작 화면 -->
+<div class="layer" id="start" hidden>
+  <h2>🌸 무슨 꽃일까?</h2>
+  <div class="howto">
+    <p>① 꽃 사진의 한 부분이 <b>크게</b> 보입니다.<br>
+       ② 조금씩 멀어지며 꽃 전체가 드러납니다.<br>
+       ③ 아래에서 꽃 이름을 고르세요.<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;일찍 맞힐수록 점수가 높아요!<br>
+       ④ 맞힌 꽃은 꽃밭에 심어집니다.</p>
+  </div>
+  <p>꽃밭 하나에 몇 송이를 심을까요?</p>
+  <div class="size" id="size">
+    <button data-n="10">10송이</button><button data-n="15" class="on">15송이</button><button data-n="20">20송이</button>
+  </div>
+  <button class="big" id="startBtn">꽃밭 가꾸기 시작</button>
+  <p class="record" id="record"></p>
+</div>
+
+<!-- 꽃밭 완성 화면 -->
+<div class="layer done" id="done" hidden>
+  <h2 id="doneTitle">🎉 축하합니다!</h2>
+  <p id="doneText"></p>
+  <div class="garden" id="garden"></div>
+  <div class="btns">
+    <button class="big" id="againBtn">다음 꽃밭 가꾸기</button>
+    <a class="ghost" href="index.html#playground">놀이터로</a>
+  </div>
+</div>
+
+<script src="assets/js/flowers.js"></script>
+<script>
+/* ===== 설정 (주인님이 고치기 쉬운 곳) ===== */
+const ZOOMS  = [3.2, 2.2, 1.5, 1];     // 확대 배율: 처음 → 원본 (4단계)
+const POINTS = [400, 300, 200, 100];   // 단계별 점수
+const STEP_MS = 3000;                  // 한 단계 머무는 시간 (3000 = 3초)
+const IMG_DIR = 'assets/img/flowers/';
+
+/* ===== 저장 (이 기기 브라우저에만) ===== */
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let best = Number(load('gukdanbi-flower-best', 0));
+let gardens = Number(load('gukdanbi-flower-gardens', 0));
+let target = Number(load('gukdanbi-flower-size', 15));
+
+/* ===== 효과음 (블록 쌓기와 같은 켜고 끄기) ===== */
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('tick'); };
+const SOUNDS = {
+  tick:  [[660, .05]],
+  right: [[523, .09], [659, .09], [784, .16]],                    // 도-미-솔
+  wrong: [[262, .15, 'triangle'], [220, .22, 'triangle']],
+  done:  [[523, .12], [659, .12], [784, .12], [1047, .35]],        // 도-미-솔-도
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 꽃 목록 정리: 이름별로 사진 묶기 ===== */
+const BY_NAME = {};
+FLOWERS.forEach(f => (BY_NAME[f.name] = BY_NAME[f.name] || []).push(f.file));
+const NAMES = Object.keys(BY_NAME);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+/* ===== 화면 요소 ===== */
+const $ = id => document.getElementById(id);
+const view = $('view'), frame = $('frame'), photo = $('photo'), steps = [...$('steps').children];
+const choicesEl = $('choices'), resultEl = $('result'), nextBtn = $('nextBtn'), bedEl = $('bed');
+
+/* ===== 게임 상태 ===== */
+let queue = [], planted = [], score = 0, cur = null, stage = 0, timer = null, answered = false;
+
+function updateInfo() {
+  $('count').innerHTML = `${planted.length}<small>/${target}</small>`;
+  $('score').textContent = score;
+  $('best').textContent = best;
+}
+function drawBed() {
+  bedEl.innerHTML = planted.map(p => `<img src="${IMG_DIR + p.file}" alt="${p.name}" title="${p.name}">`).join('')
+    + '<span class="empty"></span>'.repeat(Math.max(0, target - planted.length));
+}
+
+function newGarden() {
+  queue = shuffle(NAMES);               // 한 판 안에서는 같은 꽃이 다시 나오지 않음
+  planted = []; score = 0;
+  updateInfo(); drawBed();
+  $('start').hidden = true; $('done').hidden = true;
+  nextQuestion();
+}
+
+/* 사진을 창 안에 맞추고, 확대할 한 점을 정함 */
+function fitFrame() {
+  const W = view.clientWidth, H = view.clientHeight;
+  const r = photo.naturalWidth / photo.naturalHeight;
+  let w = W, h = W / r;
+  if (h > H) { h = H; w = H * r; }
+  Object.assign(frame.style, { width: w + 'px', height: h + 'px', left: (W - w) / 2 + 'px', top: (H - h) / 2 + 'px' });
+}
+function setZoom(s) { frame.style.transform = `scale(${s})`; }
+
+function nextQuestion() {
+  clearInterval(timer);
+  if (!queue.length) queue = shuffle(NAMES.filter(n => !planted.some(p => p.name === n)));
+  const name = queue.pop();
+  cur = { name, file: pick(BY_NAME[name]) };
+  answered = false; stage = 0;
+  resultEl.hidden = true; nextBtn.hidden = true;
+
+  // 보기 4개: 정답 + 다른 꽃 3개
+  const opts = shuffle([name, ...shuffle(NAMES.filter(n => n !== name)).slice(0, 3)]);
+  choicesEl.innerHTML = opts.map((n, i) => `<button data-name="${n}">${n}</button>`).join('');
+  [...choicesEl.children].forEach(b => b.onclick = () => answer(b));
+
+  // 사진 불러오기 → 확대해서 시작
+  frame.style.transition = 'none'; frame.style.opacity = 0;
+  photo.onload = () => {
+    fitFrame();
+    // 확대할 지점: 사진 가운데 쪽(30~70%)에서 무작위
+    frame.style.transformOrigin = `${30 + Math.random() * 40}% ${30 + Math.random() * 40}%`;
+    setZoom(ZOOMS[0]);
+    frame.offsetHeight;                              // 바로 적용
+    frame.style.transition = ''; frame.style.opacity = 1;
+    showStage();
+    timer = setInterval(() => {
+      if (stage < ZOOMS.length - 1) { stage++; setZoom(ZOOMS[stage]); showStage(); beep('tick'); }
+      else clearInterval(timer);
+    }, STEP_MS);
+    preload();
+  };
+  photo.src = IMG_DIR + cur.file;
+}
+function showStage() {
+  steps.forEach((s, i) => s.classList.toggle('on', i <= stage));
+  $('pts').textContent = POINTS[stage] + '점';
+}
+function preload() {                                 // 다음 문제 사진 미리 받아 두기
+  const n = queue[queue.length - 1];
+  if (n) BY_NAME[n].forEach(f => { const im = new Image(); im.src = IMG_DIR + f; });
+}
+
+function answer(btn) {
+  if (answered) return;
+  answered = true; clearInterval(timer);
+  const ok = btn.dataset.name === cur.name;
+  [...choicesEl.children].forEach(b => {
+    b.disabled = true;
+    if (b.dataset.name === cur.name) b.classList.add('right');
+    else if (b === btn) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  setZoom(1);                                        // 원본 전체 보여 주기
+  if (ok) {
+    const got = POINTS[stage];
+    score += got;
+    planted.push(cur);
+    resultEl.innerHTML = `딩동댕! 🌸 ${cur.name}<small>+${got}점 · 꽃밭에 심었어요</small>`;
+    beep('right');
+  } else {
+    resultEl.innerHTML = `정답은 「${cur.name}」<small>다음 꽃에서 다시 도전해요</small>`;
+    beep('wrong');
+  }
+  resultEl.hidden = false;
+  if (score > best) { best = score; save('gukdanbi-flower-best', best); }
+  updateInfo(); drawBed();
+
+  if (planted.length >= target) { nextBtn.textContent = '🌷 꽃밭 보러 가기'; }
+  else nextBtn.textContent = '다음 꽃 ▶';
+  nextBtn.hidden = false;
+  nextBtn.focus({ preventScroll: true });
+}
+
+nextBtn.onclick = () => planted.length >= target ? finish() : nextQuestion();
+
+function finish() {
+  gardens++; save('gukdanbi-flower-gardens', gardens);
+  $('doneTitle').textContent = `🎉 축하합니다! ${gardens}번째 꽃밭 완성`;
+  $('doneText').innerHTML = `${target}송이를 모두 맞혀 꽃밭을 가꾸셨습니다.<br>이번 점수 <b>${score}</b>점 · 최고 점수 <b>${best}</b>점`;
+  $('garden').innerHTML = planted.map((p, i) =>
+    `<figure style="animation-delay:${i * 0.06}s"><img src="${IMG_DIR + p.file}" alt="${p.name}"><figcaption>${p.name}</figcaption></figure>`).join('');
+  $('done').hidden = false; $('done').scrollTop = 0;
+  beep('done');
+}
+$('againBtn').onclick = newGarden;
+
+/* ===== 시작 화면 ===== */
+function showStart() {
+  document.querySelectorAll('#size button').forEach(b => b.classList.toggle('on', Number(b.dataset.n) === target));
+  $('record').textContent = gardens ? `지금까지 가꾼 꽃밭 ${gardens}개 · 최고 점수 ${best}점` : `꽃 ${NAMES.length}가지가 기다리고 있어요`;
+  $('start').hidden = false;
+}
+document.querySelectorAll('#size button').forEach(b => b.onclick = () => {
+  target = Number(b.dataset.n); save('gukdanbi-flower-size', target); showStart();
+});
+$('startBtn').onclick = newGarden;
+
+/* ===== 환영 장면 (약 3.5초, 누르면 바로 넘어감) ===== */
+const intro = $('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true; intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; showStart(); }, 450);
+}
+intro.onclick = endIntro;
+setTimeout(endIntro, 3500);
+
+/* ===== 키보드 (맥북): 1~4 고르기, 엔터 다음 ===== */
+document.addEventListener('keydown', e => {
+  if (!introDone) { if (e.key === 'Enter' || e.key === ' ') endIntro(); return; }
+  if (!$('start').hidden || !$('done').hidden) { if (e.key === 'Enter') (!$('start').hidden ? $('startBtn') : $('againBtn')).click(); return; }
+  if ('1234'.includes(e.key) && e.key) { const b = choicesEl.children[Number(e.key) - 1]; if (b) b.click(); }
+  else if (e.key === 'Enter' && !nextBtn.hidden) { e.preventDefault(); nextBtn.click(); }
+});
+
+window.addEventListener('resize', () => { if (photo.naturalWidth) fitFrame(); });
+updateInfo(); drawBed();
+</script>
+</body>
+</html>

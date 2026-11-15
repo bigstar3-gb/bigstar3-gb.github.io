@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 추억의 오목</title>
+  <meta name="description" content="국단비 놀이터 — 컴퓨터와 두는 추억의 오목 (쉬움·보통·어려움)">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --purple:#c9a4ff;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+    a{color:inherit;text-decoration:none}
+    button{font-family:var(--font);cursor:pointer}
+
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line)}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;font-size:20px}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{flex:1;min-height:0;width:100%;max-width:680px;display:flex;flex-direction:column;gap:8px;padding:10px 3vw 10px}
+    .info{display:flex;gap:6px;flex:none}
+    .info .box{flex:1;background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:5px 8px;text-align:center}
+    .info .box.turn{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+    .info .label{font-size:13px;color:var(--muted)}
+    .info .val{font-size:19px;font-weight:800;line-height:1.35}
+
+    .board-wrap{flex:none;position:relative;display:flex;justify-content:center;align-items:flex-start}
+    canvas{display:block;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);touch-action:manipulation;cursor:pointer}
+    .msg{flex:none;min-height:30px;text-align:center;font-size:18px;font-weight:700;color:var(--accent)}
+    .btns{flex:none;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom)}
+    .btns button{flex:1;height:56px;border-radius:14px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;font-size:19px;font-weight:800}
+    .btns button:disabled{opacity:.4;cursor:default}
+    .btns .new{background:var(--red);border-color:var(--red)}
+
+    /* 덮개 */
+    .cover{position:fixed;inset:56px 0 0 0;z-index:4;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:14px;background:rgba(26,20,17,.92);text-align:center;padding:18px 5vw}
+    .cover[hidden],.cover [hidden]{display:none}
+    .cover.end{background:linear-gradient(rgba(26,20,17,.15) 0,rgba(26,20,17,.15) 35%,rgba(26,20,17,.95) 60%);justify-content:flex-end;padding-bottom:40px}
+    .cover h2{font-size:clamp(24px,6vw,32px);color:var(--accent)}
+    .cover p{font-size:17px;color:var(--muted);line-height:1.7;word-break:keep-all}
+    .cover .rules{background:var(--wood-dark);border:1px solid var(--line);border-radius:12px;padding:10px 16px;text-align:left}
+    .level{display:flex;gap:6px}
+    .level button{padding:10px 18px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:18px;font-weight:700}
+    .level button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .prize{background:var(--wood-dark);border:2px solid var(--purple);border-radius:12px;overflow:hidden;width:min(86vw,420px);flex:none}
+    .prize img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+    .prize.lose{border-color:var(--accent)} .prize.lose img{aspect-ratio:1/1;width:min(86vw,420px,48vh)}
+    .prize figcaption{padding:6px;font-size:18px;font-weight:800;color:var(--purple)}
+    .cover.win{background:rgba(26,20,17,.95);justify-content:center;padding-bottom:18px}
+    .cover .big{padding:15px 38px;border-radius:40px;border:none;background:var(--red);color:#fff;font-size:20px;font-weight:800}
+    .cover .ghost{padding:10px 24px;border-radius:30px;border:1.5px solid #fff;background:none;color:#fff;font-size:16px;font-weight:700}
+
+    /* 환영 장면 */
+    .intro{position:fixed;inset:56px 0 0 0;z-index:5;background:#1a1411;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:12px;text-align:center;cursor:pointer}
+    .intro[hidden]{display:none}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    @media (max-width:640px){ .top h1 .long{display:none} .info .val{font-size:17px} .btns button{height:52px;font-size:18px} }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1>⚫⚪ <span class="long">국단비 놀이터 · </span>추억의 오목</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <div class="info">
+    <div class="box" id="meBox"><div class="label">나</div><div class="val">⚫ 흑</div></div>
+    <div class="box" id="cpuBox"><div class="label">컴퓨터</div><div class="val" id="cpuLabel">⚪ 보통</div></div>
+    <div class="box"><div class="label">전적</div><div class="val" id="record">0승 0패</div></div>
+  </div>
+
+  <div class="board-wrap" id="wrap">
+    <canvas id="cv"></canvas>
+    <div class="cover" id="cover" hidden>
+      <h2 id="cTitle">⚫⚪ 추억의 오목</h2>
+      <div class="rules" id="rules"><p>· 나는 <b>흑(⚫)</b>, 먼저 둡니다<br>· 가로·세로·대각선으로 5개를 먼저 이으면 승리<br>· 6개를 이어도 승리<br>· 흑은 <b>삼삼</b>(열린 3을 동시에 두 개)을 둘 수 없어요</p></div>
+      <p id="cText"></p>
+      <div class="level" id="level"><button data-l="0">쉬움</button><button data-l="1">보통</button><button data-l="2">어려움</button></div>
+      <div class="level" id="sizeSel"><button data-n="15">15줄</button><button data-n="19">19줄 (바둑판)</button></div>
+      <figure class="prize" id="prize" hidden><img id="prizeImg" alt=""><figcaption id="prizeName"></figcaption></figure>
+      <button class="big" id="cBtn">시작하기</button>
+      <button class="ghost" id="cBtn3" hidden>↩ 무르고 이어 두기</button>
+      <button class="ghost" id="cBtn2" hidden>단계 바꾸기</button>
+    </div>
+  </div>
+
+  <p class="msg" id="msg"></p>
+  <div class="btns">
+    <button id="undoBtn">↩ 한 수 무르기</button>
+    <button class="new" id="newBtn">새 판</button>
+  </div>
+</main>
+
+<div class="intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<script src="assets/js/flowers.js"></script>
+<script>
+/* ===== 기본 ===== */
+const EMPTY = 0, BLACK = 1, WHITE = 2;
+const LEVEL_NAMES = ['쉬움', '보통', '어려움'];
+const DIRS = [[0, 1], [1, 0], [1, 1], [1, -1]];
+
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let level = Number(load('gukdanbi-omok-level', 1));
+let N = Number(load('gukdanbi-omok-size', 15));   // 바둑판 줄 수: 15 또는 19
+if (N !== 15 && N !== 19) N = 15;
+let rec = JSON.parse(load('gukdanbi-omok-record', '[[0,0],[0,0],[0,0]]'));
+
+/* ===== 효과음 ===== */
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('stone'); };
+const SOUNDS = {
+  stone: [[180, .06, 'triangle']],
+  no:    [[220, .12, 'triangle']],
+  win:   [[523, .12], [659, .12], [784, .12], [1047, .35]],
+  lose:  [[392, .18], [330, .18], [262, .32]],
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.2, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 판 ===== */
+let board = new Int8Array(N * N), history = [], state = 'ready', winLine = null, preview = null, hover = null;
+const at = (b, r, c) => (r < 0 || r >= N || c < 0 || c >= N) ? 3 : b[r * N + c];
+
+/* (r,c)에 color 돌을 놓았다고 보고, 한 방향으로 줄 모양을 읽음: 1=내 돌, 0=빈칸, 2=막힘 */
+function lineVals(b, r, c, dr, dc, color, half) {
+  const a = [];
+  for (let k = -half; k <= half; k++) {
+    if (k === 0) { a.push(1); continue; }
+    const v = at(b, r + dr * k, c + dc * k);
+    a.push(v === color ? 1 : v === EMPTY ? 0 : 2);
+  }
+  return a;
+}
+/* 줄 모양 점수 이름 */
+const P = { FIVE: 6, OPEN4: 5, FOUR: 4, OPEN3: 3, THREE: 2, OPEN2: 1, TWO: 0.5, NONE: 0 };
+function pattern(a) {                      // a 길이 9, 가운데(4)가 지금 둔 돌
+  for (let s = 0; s <= 4; s++) if (a[s] === 1 && a[s + 1] === 1 && a[s + 2] === 1 && a[s + 3] === 1 && a[s + 4] === 1) return P.FIVE;
+  for (let s = 0; s <= 3; s++) if (a[s] === 0 && a[s + 5] === 0 && a[s + 1] === 1 && a[s + 2] === 1 && a[s + 3] === 1 && a[s + 4] === 1) return P.OPEN4;
+  let four = false, open3 = false, three = false, open2 = false, two = false;
+  for (let s = 0; s <= 4; s++) {
+    let o = 0, e = 0;
+    for (let i = s; i < s + 5; i++) { if (a[i] === 1) o++; else if (a[i] === 0) e++; }
+    if (o + e < 5) continue;
+    if (o === 4) four = true; else if (o === 3) three = true; else if (o === 2) two = true;
+  }
+  if (four) return P.FOUR;
+  for (let s = 0; s <= 3; s++) {
+    if (a[s] !== 0 || a[s + 5] !== 0) continue;
+    let o = 0, e = 0;
+    for (let i = s + 1; i <= s + 4; i++) { if (a[i] === 1) o++; else if (a[i] === 0) e++; }
+    if (o + e < 4) continue;
+    if (o === 3) open3 = true; else if (o === 2) open2 = true;
+  }
+  if (open3) return P.OPEN3;
+  if (three) return P.THREE;
+  if (open2) return P.OPEN2;
+  if (two) return P.TWO;
+  return P.NONE;
+}
+/* 빈칸 (r,c)에 color를 두면 얼마나 좋은 자리인가 */
+function cellScore(b, r, c, color) {
+  let n5 = 0, o4 = 0, f4 = 0, o3 = 0, t3 = 0, o2 = 0, t2 = 0;
+  for (const [dr, dc] of DIRS) {
+    const p = pattern(lineVals(b, r, c, dr, dc, color, 4));
+    if (p === P.FIVE) n5++; else if (p === P.OPEN4) o4++; else if (p === P.FOUR) f4++;
+    else if (p === P.OPEN3) o3++; else if (p === P.THREE) t3++; else if (p === P.OPEN2) o2++; else if (p === P.TWO) t2++;
+  }
+  if (n5) return 1e7;
+  let s = 0;
+  if (o4 || f4 >= 2) s += 1e6;
+  else if (f4 && o3) s += 5e5;
+  else if (o3 >= 2 && color === WHITE) s += 1e5;         // 흑은 삼삼 금지라 백만 점수 줌
+  s += f4 * 1e4 + o3 * 5e3 + t3 * 300 + o2 * 200 + t2 * 30;
+  return s + 1;
+}
+/* 둔 돌로 5개 이상(6목 포함) 이어졌는지 → 이어진 칸 목록 */
+function fiveLine(b, r, c) {
+  const color = b[r * N + c];
+  for (const [dr, dc] of DIRS) {
+    const cells = [[r, c]];
+    for (let k = 1; at(b, r + dr * k, c + dc * k) === color; k++) cells.push([r + dr * k, c + dc * k]);
+    for (let k = 1; at(b, r - dr * k, c - dc * k) === color; k++) cells.unshift([r - dr * k, c - dc * k]);
+    if (cells.length >= 5) return cells;
+  }
+  return null;
+}
+/* 흑 삼삼 검사: 이 수로 열린 3이 두 방향 이상 생기면 금지 (5목이 되면 허용) */
+function isDoubleThree(b, r, c) {
+  b[r * N + c] = BLACK;
+  const five = fiveLine(b, r, c);
+  let threes = 0;
+  if (!five) for (const [dr, dc] of DIRS) {
+    const a = lineVals(b, r, c, dr, dc, BLACK, 5);        // 길이 11, 가운데 5
+    let open = false;
+    for (let p = 1; p <= 9 && !open; p++) {
+      if (a[p] !== 0) continue;
+      a[p] = 1;                                            // 여기 하나 더 두면 열린 4(.XXXX.)가 되는가
+      for (let s = 2; s <= 5; s++)                         // 가운데(5)를 품은 열린 4 모양
+        if (a[s - 1] === 0 && a[s + 4] === 0 && a[s] === 1 && a[s + 1] === 1 && a[s + 2] === 1 && a[s + 3] === 1) { open = true; break; }
+      a[p] = 0;
+    }
+    if (open) threes++;
+  }
+  b[r * N + c] = EMPTY;
+  return threes >= 2;
+}
+
+/* 돌 주변(2칸 안) 빈칸만 후보로 */
+function candidates(b) {
+  const out = [], seen = new Uint8Array(N * N);
+  let any = false;
+  for (let i = 0; i < N * N; i++) {
+    if (!b[i]) continue;
+    any = true;
+    const r = (i / N) | 0, c = i % N;
+    for (let dr = -2; dr <= 2; dr++) for (let dc = -2; dc <= 2; dc++) {
+      const rr = r + dr, cc = c + dc;
+      if (rr < 0 || rr >= N || cc < 0 || cc >= N) continue;
+      const j = rr * N + cc;
+      if (!b[j] && !seen[j]) { seen[j] = 1; out.push(j); }
+    }
+  }
+  if (!any) out.push(((N / 2) | 0) * N + ((N / 2) | 0));
+  return out;
+}
+function ranked(b, me) {
+  const op = me === WHITE ? BLACK : WHITE;
+  return candidates(b).map(i => {
+    const r = (i / N) | 0, c = i % N;
+    const atk = cellScore(b, r, c, me), def = cellScore(b, r, c, op);
+    return { i, r, c, atk, def, v: atk * 1.1 + def };
+  }).sort((x, y) => y.v - x.v);
+}
+
+/* ===== 컴퓨터 생각 ===== */
+let nodes = 0, deadline = Infinity;   // 어려움: 생각 시간 상한 (THINK_MS)
+const THINK_MS = 800;
+/* 4를 연달아 두며 이기는 길(VCF) 찾기: 상대는 막을 곳이 한 곳뿐 */
+function vcf(b, me, depth) {
+  if (depth <= 0 || ++nodes > 8000 || performance.now() > deadline) return -1;
+  const op = me === WHITE ? BLACK : WHITE;
+  for (const i of candidates(b)) {
+    const r = (i / N) | 0, c = i % N;
+    const s = cellScore(b, r, c, me);
+    if (s >= 1e7) return i;
+    if (s < 1e4) continue;                                  // 4가 안 되는 수는 건너뜀
+    b[i] = me;
+    const blocks = [];
+    for (const j of candidates(b)) if (cellScore(b, (j / N) | 0, j % N, me) >= 1e7) blocks.push(j);
+    let ok = false;
+    if (blocks.length >= 2) ok = true;                      // 막을 곳이 둘 → 이김
+    else if (blocks.length === 1) {
+      const j = blocks[0];
+      if (cellScore(b, (j / N) | 0, j % N, op) < 1e7) {     // 상대가 막는 수로 상대가 이기면 안 됨
+        b[j] = op;
+        ok = vcf(b, me, depth - 1) >= 0;
+        b[j] = EMPTY;
+      }
+    }
+    b[i] = EMPTY;
+    if (ok) return i;
+  }
+  return -1;
+}
+function evalBoard(b, turn) {
+  let w = 0, k = 0;
+  for (const i of candidates(b)) {
+    const r = (i / N) | 0, c = i % N;
+    w = Math.max(w, cellScore(b, r, c, WHITE)); k = Math.max(k, cellScore(b, r, c, BLACK));
+  }
+  return turn === WHITE ? w * 1.5 - k : w - k * 1.5;
+}
+function minimax(b, depth, alpha, beta, turn, width) {
+  const list = ranked(b, turn);
+  const top = list[0];
+  if (top && top.atk >= 1e7) return turn === WHITE ? 1e9 + depth : -1e9 - depth;   // 지금 둘 사람이 바로 이김
+  if (depth === 0 || ++nodes > 15000 || performance.now() > deadline) return evalBoard(b, turn);
+  let moves = list.slice(0, width);
+  if (top && top.def >= 1e7) moves = list.filter(m => m.def >= 1e7).slice(0, 2);   // 상대 5를 막아야 함
+  if (turn === WHITE) {
+    let best = -Infinity;
+    for (const m of moves) {
+      b[m.i] = WHITE; const v = minimax(b, depth - 1, alpha, beta, BLACK, width); b[m.i] = EMPTY;
+      if (v > best) best = v; if (best > alpha) alpha = best; if (alpha >= beta) break;
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (const m of moves) {
+      if (m.atk < 1e7 && isDoubleThree(b, m.r, m.c)) continue;   // 흑은 삼삼 못 둠
+      b[m.i] = BLACK; const v = minimax(b, depth - 1, alpha, beta, WHITE, width); b[m.i] = EMPTY;
+      if (v < best) best = v; if (best < beta) beta = best; if (alpha >= beta) break;
+    }
+    return best === Infinity ? evalBoard(b, turn) : best;
+  }
+}
+function cpuMove() {
+  const b = board.slice();
+  const list = ranked(b, WHITE);
+  const win = list.find(m => m.atk >= 1e7);
+  if (win) return win.i;
+  const block = list.find(m => m.def >= 1e7);
+
+  if (level === 0) {                                       // 쉬움: 가끔 실수
+    if (block && Math.random() < 0.75) return block.i;
+    const top = list.slice(0, 6);
+    return top[Math.floor(Math.random() * Math.random() * top.length)].i;
+  }
+  if (block) return block.i;
+  if (level === 1) return list[0].i;                       // 보통: 지금 가장 좋은 자리
+
+  // 어려움: ① 바로 열린 4 → ② 몰아쳐 이기는 길(VCF) → ③ 상대의 몰아치기 막기 → ④ 4수 앞 수읽기
+  if (list[0].atk >= 1e6) return list[0].i;
+  deadline = performance.now() + THINK_MS;
+  nodes = 0;
+  const myVcf = vcf(b, WHITE, 10);
+  if (myVcf >= 0) return myVcf;
+  nodes = 0;
+  const hisVcf = vcf(b, BLACK, 8);
+  let moves = list.slice(0, 10);
+  if (hisVcf >= 0 && !moves.some(m => m.i === hisVcf)) moves.unshift(list.find(m => m.i === hisVcf) || { i: hisVcf });
+  let best = moves[0].i, bestV = -Infinity;
+  nodes = 0;
+  for (const m of moves) {
+    b[m.i] = WHITE;
+    let v = minimax(b, 3, -Infinity, Infinity, BLACK, 7);
+    if (hisVcf >= 0) { nodes = 0; if (vcf(b, BLACK, 8) >= 0) v -= 1e8; }   // 이 수를 둬도 상대가 몰아치면 감점
+    b[m.i] = EMPTY;
+    v += (m.v || 0) * 1e-3;                                 // 비슷하면 지금 좋은 자리 우선
+    if (v > bestV) { bestV = v; best = m.i; }
+  }
+  return best;
+}
+
+/* ===== 그리기 ===== */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const wrap = document.getElementById('wrap'), cover = document.getElementById('cover');
+let S = 600, cell = 40, pad = 30;
+function resize() {                       // 바둑판은 정사각형: 남는 높이와 너비 중 작은 쪽에 맞춤
+  const main = document.querySelector('main'), cs = getComputedStyle(main);
+  const others = ['.info', '.msg', '.btns'].reduce((h, q) => h + document.querySelector(q).offsetHeight, 0) + 3 * 8;
+  const availH = main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - others;
+  const size = Math.floor(Math.max(200, Math.min(main.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight), availH)));
+  wrap.style.height = size + 'px';
+  cv.style.width = size + 'px'; cv.style.height = size + 'px';
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = cv.height = Math.round(size * dpr);
+  S = size; pad = size / (N + 1); cell = (size - pad * 2) / (N - 1);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+window.addEventListener('resize', resize);
+const px = c => pad + c * cell;
+function stone(r, c, color, alpha) {
+  const x = px(c), y = px(r), rad = cell * 0.46;
+  ctx.globalAlpha = alpha || 1;
+  const g = ctx.createRadialGradient(x - rad * .35, y - rad * .35, rad * .1, x, y, rad);
+  if (color === BLACK) { g.addColorStop(0, '#666'); g.addColorStop(1, '#0d0d0d'); }
+  else { g.addColorStop(0, '#fff'); g.addColorStop(1, '#cfcac2'); }
+  ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+  if (color === WHITE) { ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.stroke(); }
+  ctx.globalAlpha = 1;
+}
+function draw() {
+  ctx.fillStyle = '#e0b46a'; ctx.fillRect(0, 0, S, S);
+  ctx.strokeStyle = '#5a3d22'; ctx.lineWidth = 1;
+  for (let i = 0; i < N; i++) {
+    ctx.beginPath(); ctx.moveTo(px(0), px(i)); ctx.lineTo(px(N - 1), px(i)); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px(i), px(0)); ctx.lineTo(px(i), px(N - 1)); ctx.stroke();
+  }
+  ctx.fillStyle = '#5a3d22';
+  const STAR = N === 19 ? [3, 9, 15] : [3, 7, 11];          // 화점 위치
+  const stars = N === 19 ? STAR.flatMap(r => STAR.map(c => [r, c])) : [[3, 3], [3, 11], [11, 3], [11, 11], [7, 7]];
+  for (const [r, c] of stars) { ctx.beginPath(); ctx.arc(px(c), px(r), cell * .11, 0, Math.PI * 2); ctx.fill(); }
+  for (let i = 0; i < N * N; i++) if (board[i]) stone((i / N) | 0, i % N, board[i]);
+  const g = preview || hover;
+  if (g !== null && state === 'human' && !board[g]) stone((g / N) | 0, g % N, BLACK, preview !== null ? .55 : .3);
+  const last = history[history.length - 1];
+  if (last !== undefined) {                                  // 마지막에 둔 돌 표시
+    ctx.fillStyle = '#e8303b'; ctx.beginPath(); ctx.arc(px(last % N), px((last / N) | 0), cell * .14, 0, Math.PI * 2); ctx.fill();
+  }
+  if (winLine) {
+    ctx.strokeStyle = 'rgba(200,16,46,.85)'; ctx.lineWidth = cell * .18; ctx.lineCap = 'round';
+    const [a, z] = [winLine[0], winLine[winLine.length - 1]];
+    ctx.beginPath(); ctx.moveTo(px(a[1]), px(a[0])); ctx.lineTo(px(z[1]), px(z[0])); ctx.stroke();
+  }
+}
+
+/* ===== 진행 ===== */
+const msg = document.getElementById('msg'), undoBtn = document.getElementById('undoBtn');
+function say(t) { msg.textContent = t; }
+function showTurn() {
+  document.getElementById('meBox').classList.toggle('turn', state === 'human');
+  document.getElementById('cpuBox').classList.toggle('turn', state === 'cpu');
+  undoBtn.disabled = !(state === 'human' && history.length >= 2) && !(state === 'over' && history.length >= 1);
+}
+function showRecord() {
+  document.getElementById('cpuLabel').textContent = '⚪ ' + LEVEL_NAMES[level];
+  document.getElementById('record').textContent = `${rec[level][0]}승 ${rec[level][1]}패`;
+}
+function newGame() {
+  resize();
+  board = new Int8Array(N * N); history = []; winLine = null; preview = null;
+  state = 'human'; cover.hidden = true; cover.classList.remove('end');
+  say('흑(⚫) 차례입니다. 원하는 자리를 누르세요'); showRecord(); showTurn(); draw();
+}
+function place(i, color) {
+  board[i] = color; history.push(i); beep('stone');
+  const line = fiveLine(board, (i / N) | 0, i % N);
+  if (line) { winLine = line; end(color === BLACK); return true; }
+  if (history.length >= N * N) { end(null); return true; }
+  return false;
+}
+function human(i) {
+  if (state !== 'human' || board[i]) return;
+  const r = (i / N) | 0, c = i % N;
+  if (isDoubleThree(board, r, c)) { preview = null; draw(); beep('no'); say('🚫 삼삼은 둘 수 없어요. 다른 자리를 골라 주세요'); return; }
+  preview = null;
+  if (place(i, BLACK)) return;
+  state = 'cpu'; showTurn(); say('컴퓨터가 생각하고 있어요…'); draw();
+  setTimeout(() => {
+    const j = cpuMove();
+    if (place(j, WHITE)) return;
+    state = 'human'; showTurn(); say('흑(⚫) 차례입니다'); draw();
+  }, level === 2 ? 60 : 450);
+}
+function end(win) {
+  state = 'over'; showTurn(); draw();
+  if (win === true) { rec[level][0]++; beep('win'); }
+  else if (win === false) { rec[level][1]++; beep('lose'); }
+  save('gukdanbi-omok-record', JSON.stringify(rec)); showRecord();
+  const t = win === true ? '🎉 이겼습니다!' : win === false ? '아쉽게 졌습니다' : '비겼습니다';
+  const p = win === true ? `${LEVEL_NAMES[level]} 단계 컴퓨터를 이기셨어요` : win === false ? '컴퓨터가 5개를 먼저 이었어요. 다시 도전해 보세요!' : '바둑판이 꽉 찼어요';
+  say(t);
+  const prize = win === true && typeof FLOWERS !== 'undefined' && FLOWERS.length ? FLOWERS[Math.floor(Math.random() * FLOWERS.length)] : null;
+  if (prize) { const im = new Image(); im.src = 'assets/img/flowers/' + prize.file; }   // 미리 받아 두기
+  if (win === false) { const im = new Image(); im.src = LOSE_IMG; }
+  setTimeout(() => openCover(t, prize ? p + ' · 국단비님이 꽃 한 송이를 선물로 드려요' : p, '다시 두기', true, prize, win === false), 900);
+}
+undoBtn.onclick = () => {                                     // 내 수와 컴퓨터 수를 함께 되돌림
+  if (state === 'over') {
+    const last = history[history.length - 1];
+    const n = board[last] === WHITE ? 2 : 1;                   // 진 판: 컴퓨터 수 + 내 수 / 이긴 판: 내 수
+    if (win_reverse(n)) return;
+  } else if (state === 'human' && history.length >= 2) win_reverse(2);
+};
+function win_reverse(n) {
+  for (let k = 0; k < n && history.length; k++) board[history.pop()] = EMPTY;
+  if (state === 'over') { /* 끝난 판을 무르면 전적은 그대로 두고 이어서 둠 */ }
+  winLine = null; state = 'human'; cover.hidden = true; cover.classList.remove('end');
+  say('한 수 물렀어요. 흑(⚫) 차례입니다'); showTurn(); draw();
+  return false;
+}
+document.getElementById('newBtn').onclick = () => {
+  if (state === 'human' && history.length > 2 && !confirm('지금 판을 그만두고 새로 둘까요?')) return;
+  openCover('⚫⚪ 추억의 오목', '', '시작하기', false);
+};
+
+/* ===== 바둑판 누르기: 손가락은 한 번 눌러 미리 보고, 같은 자리를 다시 누르면 둠 / 마우스는 바로 둠 ===== */
+function cellAt(e) {
+  const rect = cv.getBoundingClientRect();
+  const x = (e.clientX - rect.left), y = (e.clientY - rect.top);
+  const c = Math.round((x - pad) / cell), r = Math.round((y - pad) / cell);
+  if (r < 0 || r >= N || c < 0 || c >= N) return null;
+  return r * N + c;
+}
+cv.addEventListener('pointerdown', e => {
+  if (state !== 'human') return;
+  const i = cellAt(e); if (i === null || board[i]) return;
+  if (e.pointerType === 'mouse') { human(i); return; }
+  if (preview === i) human(i);
+  else { preview = i; say('같은 자리를 한 번 더 누르면 둡니다'); draw(); }
+});
+cv.addEventListener('pointermove', e => {
+  if (e.pointerType !== 'mouse') return;
+  const i = cellAt(e); if (i !== hover) { hover = i; draw(); }
+});
+cv.addEventListener('pointerleave', () => { hover = null; draw(); });
+
+/* ===== 덮개 ===== */
+const levelEl = document.getElementById('level');
+function showLevel() { [...levelEl.children].forEach(b => b.classList.toggle('on', Number(b.dataset.l) === level)); }
+[...levelEl.children].forEach(b => b.onclick = () => { level = Number(b.dataset.l); save('gukdanbi-omok-level', level); showLevel(); showRecord(); });
+const sizeEl = document.getElementById('sizeSel');
+function showSize() { [...sizeEl.children].forEach(b => b.classList.toggle('on', Number(b.dataset.n) === N)); }
+[...sizeEl.children].forEach(b => b.onclick = () => { N = Number(b.dataset.n); save('gukdanbi-omok-size', N); showSize(); });
+const LOSE_IMG = 'assets/img/etc/omok-lose.jpg';         // 졌을 때 보여 주는 그림
+function openCover(t, p, btn, isEnd, prize, lose) {
+  const pz = document.getElementById('prize');
+  pz.hidden = !(prize || lose);
+  pz.classList.toggle('lose', !!lose);
+  if (prize) { document.getElementById('prizeImg').src = 'assets/img/flowers/' + prize.file; document.getElementById('prizeName').textContent = '🎁 국단비님의 선물 · 🌸 ' + prize.name; }
+  if (lose) { document.getElementById('prizeImg').src = LOSE_IMG; document.getElementById('prizeName').textContent = '다음 판에는 꼭 이겨 보세요!'; }
+  cover.classList.toggle('win', !!(prize || lose));
+  sizeEl.hidden = isEnd; showSize();
+  document.getElementById('cTitle').textContent = t;
+  document.getElementById('cText').textContent = p;
+  document.getElementById('cBtn').textContent = btn;
+  document.getElementById('rules').hidden = isEnd;
+  levelEl.hidden = isEnd;
+  document.getElementById('cBtn2').hidden = !isEnd;
+  document.getElementById('cBtn3').hidden = !(isEnd && !prize);   // 진 판·비긴 판만 무르기
+  cover.classList.toggle('end', isEnd);
+  showLevel(); cover.hidden = false;
+}
+document.getElementById('cBtn').onclick = newGame;
+document.getElementById('cBtn3').onclick = () => undoBtn.click();
+document.getElementById('cBtn2').onclick = () => openCover('⚫⚪ 추억의 오목', '', '시작하기', false);
+
+/* ===== 환영 장면 ===== */
+const intro = document.getElementById('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true; intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; resize(); openCover('⚫⚪ 추억의 오목', '', '시작하기', false); }, 450);
+}
+intro.onclick = endIntro;
+setTimeout(endIntro, 3500);
+document.addEventListener('keydown', e => { if (!introDone && (e.key === 'Enter' || e.key === ' ')) endIntro(); });
+
+resize(); showRecord(); showTurn();
+</script>
+</body>
+</html>
