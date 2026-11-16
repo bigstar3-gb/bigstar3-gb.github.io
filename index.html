@@ -29,12 +29,15 @@
   <div class="kicker">국단비 명곡극장</div>
   <h1>AI로 작곡하고, 영상으로 만듭니다</h1>
   <div class="stage" id="stage" title="눌러서 재생"></div>
-  <div class="strip-win"><div class="strip" id="strip"></div></div>
-  <div class="hint">영상을 누르면 위 스크린에서 재생됩니다</div>
-  <div class="actions">
-    <a class="btn" href="https://youtube.com/@bigstar333" target="_blank">유튜브 채널 바로가기 →</a>
+  <div class="row-head">
+    <span class="row-title">🎬 뮤직비디오</span>
+    <a class="row-link" href="https://youtube.com/@bigstar333" target="_blank">유튜브 채널 바로가기 →</a>
   </div>
-  <a class="scroll-down" href="#teacher">아래로 내리면 · 강사 국단비 ▼</a>
+  <div class="strip-win"><div class="strip" id="strip"></div></div>
+  <div class="row-head">
+    <span class="row-title">🏆 공모전 · 대회 출품작</span>
+  </div>
+  <div class="strip-win"><div class="strip" id="strip2"></div></div>
 </section>
 
 <!-- 화면 2: 강사 국단비 (야생화 두 겹 회전) -->
@@ -173,28 +176,40 @@
   }
   showCover(FEATURED);
 
-  const strip = document.getElementById('strip');
-  const reel = [...VIDEOS, ...(typeof LINK_CARDS !== 'undefined' ? LINK_CARDS : [])];
-  [...reel, ...reel].forEach(v => {          // 두 번 이어 붙여 끊김 없이 흐르게
-    const f = document.createElement('div');
-    f.className = 'film';
-    if (v.link) {                            // 링크 카드: 새 탭으로 이동
-      f.classList.add('film-link');
-      f.innerHTML = `<img src="${v.image}" alt="${v.label}"><span class="film-label">${v.label}</span>`;
-      f.onclick = () => window.open(v.link, '_blank');
-    } else {                                 // 영상 카드: 위 스크린에서 재생
-      f.innerHTML = `<img src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg" alt="${v.title || '명곡극장 뮤직비디오'}" title="${v.title}">`;
-      f.onclick = () => { play(v.id); stage.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
-    }
-    strip.appendChild(f);
-  });
-  let off = 0, stripPaused = false;
-  strip.onmouseenter = () => stripPaused = true;
-  strip.onmouseleave = () => stripPaused = false;
-  (function flow() {
-    if (!stripPaused) { off -= 0.5; if (-off >= strip.scrollWidth / 2) off = 0; strip.style.transform = `translateX(${off}px)`; }
-    requestAnimationFrame(flow);
-  })();
+  // 필름 띠 만들기 (el: 띠, list: 영상 목록, speed: 흐르는 속도, -는 반대 방향)
+  function makeStrip(el, list, speed) {
+    if (!list.length) { el.parentElement.style.display = 'none'; return; }
+    let reel = [...list];
+    while (reel.length < 10) reel = reel.concat(list);   // 영상이 적어도 띠가 꽉 차도록 반복
+    [...reel, ...reel].forEach(v => {          // 두 번 이어 붙여 끊김 없이 흐르게
+      const f = document.createElement('div');
+      f.className = 'film';
+      if (v.link) {                            // 링크 카드: 새 탭으로 이동
+        f.classList.add('film-link');
+        f.innerHTML = `<img src="${v.image}" alt="${v.label}"><span class="film-label">${v.label}</span>`;
+        f.onclick = () => window.open(v.link, '_blank');
+      } else {                                 // 영상 카드: 위 스크린에서 재생
+        f.innerHTML = `<img src="https://i.ytimg.com/vi/${v.id}/mqdefault.jpg" alt="${v.title || '명곡극장 영상'}" title="${v.title}">`;
+        f.onclick = () => { play(v.id); stage.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+      }
+      el.appendChild(f);
+    });
+    let off = speed < 0 ? -el.scrollWidth / 2 : 0, paused = false;
+    el.onmouseenter = () => paused = true;
+    el.onmouseleave = () => paused = false;
+    (function flow() {
+      if (!paused) {
+        off -= speed;
+        const half = el.scrollWidth / 2;
+        if (-off >= half) off += half;
+        if (off > 0) off -= half;
+        el.style.transform = `translateX(${off}px)`;
+      }
+      requestAnimationFrame(flow);
+    })();
+  }
+  makeStrip(document.getElementById('strip'), [...VIDEOS, ...(typeof LINK_CARDS !== 'undefined' ? LINK_CARDS : [])], 0.5);
+  makeStrip(document.getElementById('strip2'), typeof CONTEST_VIDEOS !== 'undefined' ? CONTEST_VIDEOS : [], -0.5);
 </script>
 <script src="assets/js/notices.js"></script>
 <script src="assets/js/lectures.js"></script>
