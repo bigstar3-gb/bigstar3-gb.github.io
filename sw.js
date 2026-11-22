@@ -1,9 +1,9 @@
 // 국단비 놀이터 앱 — 저장 담당(서비스 워커)
 // 파일 목록을 바꾸면 아래 버전 숫자를 하나 올립니다.
-const VERSION = 'gukdanbi-play-v13';
+const VERSION = 'gukdanbi-play-v14';
 const FILES = [
-  'play.html', 'game.html', 'flower.html', 'brick.html', 'omok.html', 'diag.html', 'match.html', 'number.html', 'proverb.html', 'word.html', 'idiom.html', 'cross.html', 'sudoku.html', 'hwatu.html', 'fortune.html', 'gostop.html',
-  'manifest.webmanifest', 'assets/css/style.css', 'assets/js/app.js', 'assets/js/flowers.js', 'assets/js/proverbs.js', 'assets/js/words.js', 'assets/js/idioms.js', 'assets/js/crosswords.js', 'assets/js/hwatu.js',
+  'play.html', 'game.html', 'flower.html', 'brick.html', 'omok.html', 'diag.html', 'match.html', 'number.html', 'proverb.html', 'word.html', 'idiom.html', 'cross.html', 'sudoku.html', 'hwatu.html', 'fortune.html', 'gostop.html', 'chunja.html',
+  'manifest.webmanifest', 'assets/css/style.css', 'assets/js/app.js', 'assets/js/flowers.js', 'assets/js/proverbs.js', 'assets/js/words.js', 'assets/js/idioms.js', 'assets/js/crosswords.js', 'assets/js/hwatu.js', 'assets/js/chunja.js',
   'assets/img/etc/heart.png', 'assets/img/etc/omok-lose.jpg', 'assets/img/etc/samgwang.png',
   'assets/img/app/icon-192.png', 'assets/img/app/icon-512.png'
 ];

@@ -158,6 +158,8 @@
     .fs{position:relative;height:64px}
     .fs img{position:absolute;top:0;height:60px;filter:drop-shadow(1px 1px 1px rgba(0,0,0,.5));transition:transform .2s}
     .fs.hot img{filter:drop-shadow(0 0 6px #ffd46b)}
+    .fs img.hl{outline:4px solid #ffd400;outline-offset:-1px;border-radius:5px;z-index:5;transform:translateY(-6px);animation:hlb .45s ease-in-out infinite alternate}
+    @keyframes hlb{from{box-shadow:0 0 4px 2px #ffd400}to{box-shadow:0 0 14px 6px #ffd400}}
     .deck{width:56px;text-align:center;flex:none}
     .deck img{width:46px}
     .deck b{display:block;font-size:14px;color:var(--muted)}
@@ -241,6 +243,7 @@
   </div>
   <div class="opts2">
     <div class="seg" id="lvSeg"><button data-lv="1">컴퓨터 쉬움</button><button data-lv="2">컴퓨터 보통</button></div>
+    <div class="seg" id="spdSeg"><button data-s="fast">빠르게</button><button data-s="normal">보통</button><button data-s="slow">천천히</button></div>
     <label class="chk"><input type="checkbox" id="gukjin"> 9월 국진(술잔)을 쌍피로도 쓰기</label>
   </div>
   <button class="big" id="startBtn">패 돌리기</button>
@@ -255,12 +258,19 @@ const PIBAK_MAX = 6;        // 진 쪽 피가 이 장 수 이하면 피박
 const BONUS = [             // 보너스 패: [그림, 피 값]
   ['bonus-2', 2], ['bonus-2', 2], ['bonus-3', 3],
 ];
-const SPEED = 650;          // 컴퓨터 움직임 빠르기 (밀리초)
+const STEP = {               // 단계별 쉬는 시간 (밀리초) — 1: 컴퓨터, 0: 나
+  1: { think: 800, put: 1200, flip: 1200, mark: 1000, after: 800 },
+  0: { think: 0,   put: 700,  flip: 900,  mark: 800,  after: 500 },
+};
+const SPEED_MUL = { fast: 0.6, normal: 1, slow: 1.5 };   // 빠르게 / 보통 / 천천히
 
 /* ===== 저장 ===== */
 function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
 function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 let lv = Number(load('gukdanbi-gostop-level', 1)) === 2 ? 2 : 1;
+let spd = SPEED_MUL[load('gukdanbi-gostop-speed', 'normal')] ? load('gukdanbi-gostop-speed', 'normal') : 'normal';
+const D = (p, k) => STEP[p][k] * SPEED_MUL[spd];
+let hl = null;              // 가져갈 패 표시
 let gukjinOpt = load('gukdanbi-gostop-gukjin', 'on') === 'on';
 let totals = JSON.parse(load('gukdanbi-gostop-total', '{"p":0,"c":0,"w":0,"l":0}'));
 
@@ -353,7 +363,7 @@ function newRound() {
   render();
   say(first === 0 ? '내 차례입니다. 낼 패를 고르세요' : '컴퓨터부터 시작합니다');
   busy = false;
-  if (first === 1) setTimeout(() => cpuTurn(), SPEED);
+  if (first === 1) setTimeout(() => cpuTurn(), D(1, 'after'));
 }
 function groupBy(cards) { const g = {}; cards.forEach(c => (g[c.month] = g[c.month] || []).push(c)); return g; }
 function sortHand(p) { S.hand[p].sort((a, b) => (a.month || 13) - (b.month || 13) || a.id - b.id); }
@@ -365,7 +375,7 @@ function render() {
   const g = groupBy(S.floor);
   const months = Object.keys(g).map(Number).sort((a, b) => a - b);
   const selMonth = sel >= 0 ? S.hand[0][sel].month : -1;
-  $('floor').innerHTML = months.map(m => `<div class="fs${m === selMonth ? ' hot' : ''}">` + g[m].map((c, k) => `<img src="${src(c)}" style="left:${k * 14}px" alt="">`).join('') + '</div>').join('');
+  $('floor').innerHTML = months.map(m => `<div class="fs${m === selMonth ? ' hot' : ''}">` + g[m].map((c, k) => `<img${hl && hl.has(c) ? ' class="hl"' : ''} src="${src(c)}" style="left:${k * 14}px" alt="">`).join('') + '</div>').join('');
   $('deckCnt').textContent = S.deck.length + '장';
   // 컴퓨터 손패(뒷면)
   $('cHand').innerHTML = S.hand[1].map(() => '<img src="assets/img/hwatu/back.png" alt="">').join('');
@@ -407,11 +417,11 @@ async function play(p, card) {
     S.cap[p].push(card); beep('special');
     say(`${who}: 보너스 피! 한 장 더 받아요`);
     if (S.deck.length) { S.hand[p].push(S.deck.pop()); if (p === 0) sortHand(0); }
-    render(); await sleep(SPEED);
+    render(); await sleep(D(p, 'put'));
     if (!S.hand[p].length) {                              // 낼 패가 없으면 차례 넘김
       if (!S.hand[0].length && !S.hand[1].length) return endRound(-1);
       S.turn = 1 - p; busy = false; render();
-      if (p === 0) setTimeout(cpuTurn, SPEED * 0.6); else say('내 차례입니다. 낼 패를 고르세요');
+      if (p === 0) setTimeout(cpuTurn, D(0, 'after')); else say('내 차례입니다. 낼 패를 고르세요');
       return;
     }
     busy = false;
@@ -422,18 +432,18 @@ async function play(p, card) {
   // 1) 낸 패
   const m = card.month, same = S.floor.filter(c => c.month === m);
   let pend = null, placed = false, took2 = null;
-  S.floor.push(card); render(); beep('tak'); await sleep(SPEED * 0.6);
+  S.floor.push(card); render(); beep('tak'); await sleep(D(p, 'put'));
   if (same.length === 1) pend = [card, same[0]];
   else if (same.length === 2) { took2 = same; const pick = await choose(p, same); pend = [card, pick]; }
   else if (same.length === 3) { pend = [card, ...same]; }
   else placed = true;
   // 2) 더미 뒤집기
   let flip = S.deck.pop();
-  while (flip && flip.bonus) { S.cap[p].push(flip); beep('special'); say(`${who}: 뒤집었더니 보너스 피!`); render(); await sleep(SPEED); flip = S.deck.pop(); }
+  while (flip && flip.bonus) { S.cap[p].push(flip); beep('special'); say(`${who}: 뒤집었더니 보너스 피!`); render(); await sleep(D(p, 'flip')); flip = S.deck.pop(); }
   const takes = [], notes = [];
   let steal = 0;
   if (flip) {
-    S.floor.push(flip); render(); await sleep(SPEED * 0.7);
+    S.floor.push(flip); render(); await sleep(D(p, 'flip'));
     if (flip.month === m) {
       if (same.length === 1) { notes.push('뻑!'); pend = null; beep('bad'); }                  // 세 장이 바닥에 남음
       else if (same.length === 0) { takes.push(card, flip); notes.push('쪽!'); steal++; }       // 낸 패 + 뒤집은 패
@@ -450,13 +460,14 @@ async function play(p, card) {
   if (pend) { takes.push(...pend); if (same.length === 3) { notes.push('뻑 먹기!'); steal++; } }
   // 3) 가져오기
   const uniq = [...new Set(takes)];
+  if (uniq.length) { hl = new Set(uniq); render(); await sleep(D(p, 'mark')); hl = null; }   // 가져갈 패 반짝
   uniq.forEach(c => { S.floor.splice(S.floor.indexOf(c), 1); S.cap[p].push(c); });
   if (uniq.length && !S.floor.length && (S.deck.length || S.hand[opp].length)) { notes.push('싹쓸이!'); steal++; }
   for (let k = 0; k < steal; k++) stealPi(p);
   if (notes.length) { say(`${who}: ${notes.join(' ')}${steal ? ' 상대 피 ' + steal + '장 가져옴' : ''}`); beep(notes.includes('뻑!') ? 'bad' : 'special'); }
   else if (uniq.length) { say(`${who}: ${uniq.length}장 가져옴`); beep('take'); }
   else say(`${who}: 가져온 패 없음`);
-  render(); await sleep(SPEED);
+  render(); await sleep(D(p, 'after'));
   // 4) 고 / 스톱
   const sc = score(p).t;
   const handsEmpty = !S.hand[0].length && !S.hand[1].length;
@@ -464,11 +475,11 @@ async function play(p, card) {
     const goOn = handsEmpty ? false : await decideGo(p, sc);
     if (!goOn) return endRound(p);
     S.go[p]++; S.goScore[p] = sc; beep('go');
-    say(`${who}: ${S.go[p]}고!`); render(); await sleep(SPEED);
+    say(`${who}: ${S.go[p]}고!`); render(); await sleep(D(p, 'put'));
   }
   if (handsEmpty) return endRound(-1);
   S.turn = opp; busy = false; render();
-  if (opp === 1) setTimeout(cpuTurn, SPEED * 0.6); else say('내 차례입니다. 낼 패를 고르세요');
+  if (opp === 1) setTimeout(cpuTurn, D(p, 'after')); else say('내 차례입니다. 낼 패를 고르세요');
 }
 function stealPi(p) {
   const opp = 1 - p, cap = S.cap[opp];
@@ -536,8 +547,8 @@ function cpuTurn() {
     });
   }
   hand.splice(hand.indexOf(pick), 1);
-  say('컴퓨터 차례…');
-  play(1, pick);
+  say('컴퓨터가 생각 중…');
+  setTimeout(() => { if (!S.over) play(1, pick); }, D(1, 'think'));
 }
 
 /* ===== 판 끝 ===== */
@@ -574,11 +585,13 @@ $('nextBtn').onclick = newRound;
 /* ===== 시작 화면 ===== */
 function showStart() {
   document.querySelectorAll('#lvSeg button').forEach(b => b.classList.toggle('on', Number(b.dataset.lv) === lv));
+  document.querySelectorAll('#spdSeg button').forEach(b => b.classList.toggle('on', b.dataset.s === spd));
   $('gukjin').checked = gukjinOpt;
   $('record').textContent = totals.w + totals.l ? `지금까지 ${totals.w}승 ${totals.l}패 · 누적 ${totals.p} : ${totals.c}` : '돈 없이 점수만 쌓는 놀이입니다';
   $('start').hidden = false;
 }
 document.querySelectorAll('#lvSeg button').forEach(b => b.onclick = () => { lv = Number(b.dataset.lv); save('gukdanbi-gostop-level', lv); showStart(); });
+document.querySelectorAll('#spdSeg button').forEach(b => b.onclick = () => { spd = b.dataset.s; save('gukdanbi-gostop-speed', spd); showStart(); });
 $('gukjin').onchange = e => { gukjinOpt = e.target.checked; save('gukdanbi-gostop-gukjin', gukjinOpt ? 'on' : 'off'); };
 $('startBtn').onclick = newRound;
 

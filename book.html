@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>제비꽃의 속삭임 | 국단비의 책 · 맛보기</title>
+  <meta name="description" content="국단비의 책 「제비꽃의 속삭임」 — 꽃과 대화하며 써 내려간 삶과 어원의 기록. 84편 차례와 맛보기 7편">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b; --violet:#6b4fa0; --violet-l:#efe8f5;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --cream:#fffaf3; --ink:#2b231f; --sub:#6b5d52;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+      --fs:19px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:var(--font);background:var(--cream);color:var(--ink);line-height:1.8}
+    a{color:inherit;text-decoration:none}
+    button{font-family:var(--font);cursor:pointer}
+
+    .top{position:sticky;top:0;z-index:5;height:56px;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);color:#fff;border-bottom:1px solid var(--line)}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:17px;color:var(--accent);font-weight:700}
+    .top .buy-s{padding:6px 14px;border-radius:20px;background:var(--red);color:#fff;font-size:15px;font-weight:700}
+
+    main{max-width:760px;margin:0 auto;padding:22px 5vw 60px}
+
+    /* 책 머리 */
+    .head{display:grid;grid-template-columns:150px 1fr;gap:22px;align-items:center;margin-bottom:26px}
+    .head img{width:100%;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.22)}
+    .head .kick{color:var(--violet);font-weight:800;font-size:15px;letter-spacing:.12em}
+    .head h2{font-size:clamp(26px,6vw,34px);line-height:1.3}
+    .head p{color:var(--sub);font-size:17px;line-height:1.6;word-break:keep-all;margin-top:4px}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .btn{display:inline-flex;align-items:center;gap:6px;padding:12px 22px;border-radius:30px;font-size:17px;font-weight:800;border:none}
+    .btn.buy{background:var(--red);color:#fff}
+    .btn.ghost{background:#fff;color:var(--violet);border:1.5px solid var(--violet)}
+
+    /* 차례 */
+    .tochead{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:6px;margin-bottom:12px}
+    .tochead h3{font-size:22px}
+    .tochead small{color:var(--sub);font-size:15px}
+    .legend{font-size:15px;color:var(--sub);margin-bottom:10px}
+    .legend b{color:var(--violet)}
+    details.cat{border:1px solid #e6d9c8;border-radius:12px;background:#fff;margin-bottom:10px;overflow:hidden}
+    details.cat summary{list-style:none;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;font-size:19px;font-weight:800;cursor:pointer}
+    details.cat summary::-webkit-details-marker{display:none}
+    details.cat summary .n{font-size:15px;color:var(--sub);font-weight:600}
+    details.cat summary .n em{font-style:normal;color:var(--violet);font-weight:800;margin-left:6px}
+    details.cat summary .ar{color:var(--red);transition:transform .2s;margin-left:8px}
+    details.cat[open] summary .ar{transform:rotate(90deg)}
+    .cat ol{list-style:none;border-top:1px solid #f0e6da}
+    .cat li button{width:100%;display:flex;gap:10px;align-items:flex-start;text-align:left;padding:11px 16px;border:none;background:none;
+      font-size:17px;line-height:1.5;color:#8a7d72;border-bottom:1px dashed #f0e6da;word-break:keep-all}
+    .cat li:last-child button{border-bottom:none}
+    .cat li button .no{flex:none;width:26px;color:#b9a99a;font-weight:700}
+    .cat li button .t{flex:1}
+    .cat li button .pg{flex:none;font-size:14px;color:#b9a99a}
+    .cat li button .lk{flex:none}
+    .cat li.free button{color:var(--ink);font-weight:800;background:var(--violet-l)}
+    .cat li.free button .no{color:var(--violet)}
+    .cat li.free .tag{display:inline-block;font-size:13px;font-weight:800;color:#fff;background:var(--violet);border-radius:10px;padding:1px 8px;margin-left:6px;vertical-align:2px;white-space:nowrap}
+
+    /* 맛보기 목록 */
+    .picks{display:flex;flex-direction:column;gap:8px;margin:0 0 26px}
+    .picks button{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;border:1.5px solid var(--violet);background:var(--violet-l);
+      text-align:left;font-size:18px;font-weight:800;color:var(--ink);line-height:1.4;word-break:keep-all}
+    .picks button img{width:54px;height:54px;border-radius:8px;object-fit:cover;flex:none}
+    .picks button small{display:block;font-size:14px;color:var(--sub);font-weight:600}
+
+    /* 잠긴 글 안내 */
+    .sheet{position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center}
+    .sheet[hidden]{display:none}
+    .sheet .box{width:100%;max-width:560px;background:#fff;border-radius:18px 18px 0 0;padding:22px 22px 28px;text-align:center}
+    .sheet h4{font-size:20px;line-height:1.45;word-break:keep-all;margin:6px 0 4px}
+    .sheet p{color:var(--sub);font-size:16px;margin-bottom:16px}
+    .sheet .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .sheet .close{background:#f2ebe2;color:var(--ink)}
+
+    /* 읽기 화면 */
+    #reader[hidden],#home[hidden]{display:none}
+    .rbar{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+    .rbar .back{font-size:16px;font-weight:700;color:var(--violet);background:none;border:none;padding:6px 0}
+    .tools{display:flex;gap:6px}
+    .tools button{min-width:46px;height:40px;border-radius:10px;border:1.5px solid #d8c8b8;background:#fff;font-size:16px;font-weight:800;color:var(--ink)}
+    .tools button.on{background:var(--accent);border-color:var(--accent)}
+    .rkick{color:var(--violet);font-weight:800;font-size:14px;letter-spacing:.08em}
+    .rtitle{font-size:clamp(24px,5.8vw,32px);line-height:1.4;word-break:keep-all;margin:2px 0 4px}
+    .rpage{color:var(--sub);font-size:15px;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #e6d9c8}
+    article{font-size:var(--fs);word-break:keep-all}
+    article p{margin:0 0 1.1em}
+    article h5{font-size:1.15em;margin:1.4em 0 .5em;padding-left:10px;border-left:5px solid var(--violet)}
+    article .hl{color:#d0610f;font-weight:800}
+    article b{font-weight:800}
+    article figure{margin:1em 0 1.2em;text-align:center}
+    article figure img{max-width:100%;border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.12)}
+    article figure.sticker img{width:120px;box-shadow:none;border-radius:6px}
+    article figcaption{font-size:.8em;color:var(--sub);margin-top:4px;font-style:italic}
+    article .box{background:#f6ecdf;border-radius:12px;padding:12px 16px;margin:0 0 1.1em;font-size:.95em}
+    .end{margin-top:30px;padding:20px;border-radius:14px;background:var(--wood);color:#fff;text-align:center}
+    .end h4{font-size:19px;line-height:1.5;word-break:keep-all}
+    .end p{color:var(--muted);font-size:16px;margin:4px 0 14px}
+    .nav2{display:flex;gap:10px;margin-top:16px}
+    .nav2 button{flex:1;min-height:56px;border-radius:12px;border:1.5px solid #d8c8b8;background:#fff;font-size:16px;font-weight:800;line-height:1.35;padding:6px 10px;word-break:keep-all}
+    .nav2 button:disabled{opacity:.35}
+    footer{text-align:center;color:var(--sub);font-size:14px;padding:20px 0 30px}
+
+    @media (max-width:560px){
+      .head{grid-template-columns:110px 1fr;gap:14px}
+      .head p{font-size:15px}
+      .btn{padding:11px 18px;font-size:16px}
+      .top h1 .long{display:none}
+    }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#book"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1>📖 <span class="long">국단비의 책 · </span>제비꽃의 속삭임</h1>
+  <a class="buy-s" id="buyTop" target="_blank" rel="noopener">구매</a>
+</header>
+
+<main>
+  <!-- 첫 화면: 책 소개 + 맛보기 + 차례 -->
+  <div id="home">
+    <div class="head">
+      <img src="assets/img/book/cover.jpg" alt="제비꽃의 속삭임 표지">
+      <div>
+        <div class="kick">국단비의 책</div>
+        <h2>제비꽃의 속삭임</h2>
+        <p>꽃과 대화하며 써 내려간 삶과 어원의 기록<br>
+        길가의 작은 꽃과 우리말 어원, 살아온 이야기를 엮은 84편</p>
+        <div class="btns">
+          <a class="btn buy" id="buyHead" target="_blank" rel="noopener">🛒 교보문고에서 구매</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="tochead"><h3 id="pickHead">📖 맛보기</h3><small>누르면 바로 읽을 수 있어요</small></div>
+    <div class="picks" id="picks"></div>
+
+    <div class="tochead"><h3>목차</h3><small>전체 84편 · 7개 분류</small></div>
+    <p class="legend"><b>보라색 글</b>은 맛보기로 읽을 수 있어요. 🔒 글은 책에서 만나실 수 있습니다.</p>
+    <div id="toc"></div>
+  </div>
+
+  <!-- 읽기 화면 -->
+  <div id="reader" hidden>
+    <div class="rbar">
+      <button class="back" id="backBtn">◀ 목차로</button>
+      <div class="tools">
+        <button id="fsDown" aria-label="글씨 작게">가−</button>
+        <button id="fsUp" aria-label="글씨 크게">가+</button>
+        <button id="speakBtn" aria-label="읽어 주기">🔈</button>
+      </div>
+    </div>
+    <div class="rkick" id="rkick"></div>
+    <h2 class="rtitle" id="rtitle"></h2>
+    <div class="rpage" id="rpage"></div>
+    <article id="art"></article>
+    <div class="end">
+      <h4 id="restHead">나머지 글은 책에서 만나 보세요</h4>
+      <p>제비꽃의 속삭임 — 꽃과 대화하며 써 내려간 삶과 어원의 기록</p>
+      <a class="btn buy" id="buyEnd" target="_blank" rel="noopener">🛒 교보문고에서 구매</a>
+    </div>
+    <div class="nav2"><button id="prevA"></button><button id="nextA"></button></div>
+  </div>
+</main>
+
+<!-- 잠긴 글 안내 -->
+<div class="sheet" id="sheet" hidden>
+  <div class="box">
+    <div style="font-size:34px">🔒</div>
+    <h4 id="sheetTitle"></h4>
+    <p>이 글은 책 「제비꽃의 속삭임」에서 읽으실 수 있어요.</p>
+    <div class="row">
+      <a class="btn buy" id="buySheet" target="_blank" rel="noopener">🛒 교보문고에서 구매</a>
+      <button class="btn close" id="sheetClose">닫기</button>
+    </div>
+  </div>
+</div>
+
+<footer>© 국단비 · 「제비꽃의 속삭임」의 글과 사진은 저자의 것입니다.</footer>
+
+<script src="assets/js/book.js"></script>
+<script>
+const IMG = 'assets/img/book/';
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+['buyTop', 'buyHead', 'buyEnd', 'buySheet'].forEach(id => $(id).href = BOOK_BUY);
+
+/* 맛보기 순서: 목차 순서대로 */
+const FREE = [];
+TOC.forEach(([cat, items]) => items.forEach(([t, p, id]) => { if (id) FREE.push({ id, cat, t }); }));
+// 책 제목 글(제비꽃)은 맨 앞에
+FREE.sort((x, y) => (y.id === 'jebi') - (x.id === 'jebi'));
+const byId = id => ARTICLES.find(a => a.id === id);
+const firstImg = a => (a.b.find(b => b[0] === 'img' && b[2] !== '~') || [])[1];
+
+/* 첫 화면 */
+$('pickHead').textContent = `📖 맛보기 ${FREE.length}편`;
+$('restHead').textContent = `나머지 ${TOC.reduce((n, c) => n + c[1].length, 0) - FREE.length}편은 책에서 만나 보세요`;
+$('picks').innerHTML = FREE.map(f => { const a = byId(f.id);
+  return `<button data-id="${f.id}"><img src="${IMG}${firstImg(a)}.jpg" alt=""><span>${esc(a.title)}<small>${esc(f.cat)} · 책 ${a.page}쪽</small></span></button>`; }).join('');
+$('toc').innerHTML = TOC.map(([cat, items], ci) => {
+  const nFree = items.filter(x => x[2]).length;
+  return `<details class="cat"${nFree ? ' open' : ''}><summary><span>${esc(cat)}</span><span class="n">${items.length}편${nFree ? `<em>맛보기 ${nFree}</em>` : ''}<span class="ar">▶</span></span></summary><ol>` +
+    items.map(([t, p, id], i) => `<li class="${id ? 'free' : ''}"><button data-id="${id}" data-t="${esc(t)}"><span class="no">${i + 1}</span><span class="t">${esc(t)}${id ? '<span class="tag">📖 맛보기</span>' : ''}</span><span class="${id ? 'pg' : 'lk'}">${id ? p + '쪽' : '🔒'}</span></button></li>`).join('') +
+    '</ol></details>';
+}).join('');
+document.querySelectorAll('#picks button, #toc li button').forEach(b => b.onclick = () => {
+  if (b.dataset.id) location.hash = b.dataset.id;
+  else { $('sheetTitle').textContent = '「' + b.dataset.t + '」'; $('sheet').hidden = false; }
+});
+$('sheetClose').onclick = () => $('sheet').hidden = true;
+$('sheet').onclick = e => { if (e.target === $('sheet')) $('sheet').hidden = true; };
+
+/* 글 그리기 */
+const inline = s => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+const lineHTML = l => l.startsWith('#') ? `<span class="hl">${inline(l.slice(1))}</span>` : l.startsWith('**') && !/\*\*.+\*\*/.test(l) ? `<b>${inline(l.slice(2))}</b>` : inline(l);
+function render(a) {
+  return a.b.map(b => {
+    if (b[0] === 'p') return '<p>' + b[1].map(lineHTML).join('<br>') + '</p>';
+    if (b[0] === 'h') return `<h5>${esc(b[1])}</h5>`;
+    if (b[0] === 'box') return '<div class="box">' + b[1].map(lineHTML).join('<br>') + '</div>';
+    if (b[0] === 'img') return b[2] === '~' ? `<figure class="sticker"><img src="${IMG}${b[1]}.jpg" alt=""></figure>`
+      : `<figure><img src="${IMG}${b[1]}.jpg" alt="${esc(b[2])}" loading="lazy">${b[2] ? `<figcaption>${esc(b[2])}</figcaption>` : ''}</figure>`;
+    return '';
+  }).join('');
+}
+const plain = a => a.title + '. ' + a.b.filter(b => b[0] !== 'img').map(b => [].concat(b[1]).join(' ')).join(' ').replace(/[#*<>]/g, ' ').replace(/\.{3,}/g, '.');
+
+/* 읽어 주기 */
+const canSpeak = 'speechSynthesis' in window;
+let koVoice = null;
+function findVoice() { if (canSpeak) koVoice = speechSynthesis.getVoices().find(v => /^ko/i.test(v.lang)) || null; }
+if (canSpeak) { findVoice(); speechSynthesis.onvoiceschanged = findVoice; } else $('speakBtn').hidden = true;
+let speaking = false;
+function stopSpeak() { if (canSpeak) speechSynthesis.cancel(); speaking = false; $('speakBtn').classList.remove('on'); $('speakBtn').textContent = '🔈'; }
+$('speakBtn').onclick = () => {
+  if (speaking) return stopSpeak();
+  const a = byId(location.hash.slice(1)); if (!a) return;
+  speechSynthesis.cancel();
+  // 긴 글은 문장 덩어리로 나눠 차례로 읽음 (폰에서 중간에 끊기지 않게)
+  const parts = plain(a).match(/[^.?!。]+[.?!。]?/g).reduce((o, s) => { if (o.length && (o[o.length - 1] + s).length < 180) o[o.length - 1] += s; else o.push(s); return o; }, []);
+  speaking = true; $('speakBtn').classList.add('on'); $('speakBtn').textContent = '⏹';
+  parts.forEach((t, i) => { const u = new SpeechSynthesisUtterance(t); u.lang = 'ko-KR'; u.rate = 0.9; if (koVoice) u.voice = koVoice;
+    if (i === parts.length - 1) u.onend = stopSpeak; speechSynthesis.speak(u); });
+};
+
+/* 글씨 크기 (기기에 기억) */
+const FS = [17, 19, 21, 24, 27];
+let fsi = 1; try { fsi = Math.min(4, Math.max(0, Number(localStorage.getItem('gukdanbi-book-fs') ?? 1))); } catch (e) {}
+function setFs() { document.documentElement.style.setProperty('--fs', FS[fsi] + 'px'); $('fsDown').disabled = fsi === 0; $('fsUp').disabled = fsi === 4; try { localStorage.setItem('gukdanbi-book-fs', fsi); } catch (e) {} }
+$('fsDown').onclick = () => { if (fsi > 0) { fsi--; setFs(); } };
+$('fsUp').onclick = () => { if (fsi < 4) { fsi++; setFs(); } };
+setFs();
+
+/* 화면 전환 (주소 끝 #hwatu 처럼 — 뒤로 가기 버튼도 됨) */
+function route() {
+  stopSpeak();
+  const id = location.hash.slice(1), a = byId(id);
+  if (!a) { $('reader').hidden = true; $('home').hidden = false; document.title = '제비꽃의 속삭임 | 국단비의 책 · 맛보기'; return; }
+  const k = FREE.findIndex(f => f.id === id);
+  $('rkick').textContent = `📖 맛보기 ${k + 1} / ${FREE.length} · ${FREE[k].cat}`;
+  $('rtitle').textContent = a.title;
+  $('rpage').textContent = `제비꽃의 속삭임 · 책 ${a.page}쪽`;
+  $('art').innerHTML = render(a);
+  const p = FREE[k - 1], n = FREE[k + 1];
+  $('prevA').disabled = !p; $('prevA').innerHTML = p ? '◀ 앞 글<br><small>' + esc(byId(p.id).title.split(' / ')[0]) + '</small>' : '◀ 앞 글';
+  $('nextA').disabled = !n; $('nextA').innerHTML = n ? '다음 글 ▶<br><small>' + esc(byId(n.id).title.split(' / ')[0]) + '</small>' : '다음 글 ▶';
+  $('prevA').onclick = () => p && (location.hash = p.id);
+  $('nextA').onclick = () => n && (location.hash = n.id);
+  $('home').hidden = true; $('reader').hidden = false;
+  document.title = a.title.split(' / ')[0] + ' | 제비꽃의 속삭임';
+  window.scrollTo(0, 0);
+}
+$('backBtn').onclick = () => { location.hash = ''; };
+window.addEventListener('hashchange', route);
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopSpeak(); });
+route();
+</script>
+</body>
+</html>

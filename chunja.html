@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 천자문 (한자 공부)</title>
+  <meta name="description" content="국단비 놀이터 — 천자문 1000자를 훈음과 함께 배우는 한자 공부 게임">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3d2a23">
+  <link rel="apple-touch-icon" href="assets/img/app/apple-touch-icon.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --green:#3f9b5a; --purple:#c9a4ff; --cream:#fffaf3;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      -webkit-user-select:none;user-select:none;touch-action:manipulation}
+    a{color:inherit;text-decoration:none}
+    button,input{font-family:var(--font)}
+    button{cursor:pointer}
+
+    /* 상단 띠 */
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;font-size:20px}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{width:100%;max-width:720px;display:flex;flex-direction:column;padding:12px 4vw 24px;gap:12px}
+
+    /* 위 정보 줄 */
+    .info{display:flex;gap:10px}
+    .info .box{flex:1;background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center}
+    .info .label{font-size:13px;color:var(--muted)}
+    .info .val{font-size:22px;font-weight:800;line-height:1.3}
+    .info .val small{font-size:15px;color:var(--muted);font-weight:600}
+
+    /* 속담 카드 */
+    .card{position:relative;background:var(--cream);color:var(--wood-dark);border:2px solid var(--red);border-radius:14px;
+      padding:44px 18px 18px;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+    .card .q{font-size:clamp(24px,6.4vw,32px);font-weight:800;line-height:1.55;word-break:keep-all;text-align:center}
+    .card .q .blank{display:inline-block;min-width:2.2em;padding:0 .2em;border-bottom:3px solid var(--red);color:var(--red);letter-spacing:.08em}
+    .card .q .ans{color:var(--green);border-bottom:3px solid var(--green)}
+    .card .q .tail{color:#b9a99a}
+    .card .mean{font-size:18px;line-height:1.6;color:#5a4a3f;text-align:center;word-break:keep-all;border-top:1px dashed #d8c8b8;padding-top:10px}
+    .card .mean[hidden]{display:none}
+    .card .mode{position:absolute;left:12px;top:8px;font-size:13px;font-weight:700;color:#a08c7c}
+    .speak{position:absolute;right:8px;top:6px;width:46px;height:40px;border-radius:10px;border:1.5px solid #d8c8b8;background:#fff;font-size:21px}
+    .speak.on{background:var(--accent);border-color:var(--accent)}
+
+    /* 보기 버튼 */
+    .choices{display:flex;flex-direction:column;gap:10px}
+    .choices button{min-height:60px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;
+      font-size:21px;font-weight:800;word-break:keep-all;line-height:1.3;text-align:left;display:flex;gap:12px;align-items:center}
+    .choices button i{font-style:normal;flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);
+      font-size:16px;display:flex;align-items:center;justify-content:center}
+    .choices button:disabled{cursor:default}
+    .choices button.right{background:var(--green);border-color:var(--green)}
+    .choices button.wrong{background:var(--red);border-color:var(--red)}
+    .choices button.dim{opacity:.45}
+
+    /* 직접 쓰기 */
+    .write{display:flex;flex-direction:column;gap:10px}
+    .write[hidden],.choices[hidden]{display:none}
+    .write .row{display:flex;gap:8px}
+    .write input{flex:1;min-width:0;height:60px;border-radius:14px;border:2px solid var(--accent);background:#fff;color:var(--wood-dark);
+      font-size:24px;font-weight:800;padding:0 14px;-webkit-user-select:text;user-select:text}
+    .write input:disabled{opacity:.6}
+    .write .ok{flex:none;width:96px;border-radius:14px;border:none;background:var(--red);color:#fff;font-size:20px;font-weight:800}
+    .write .hint{align-self:flex-start;padding:8px 16px;border-radius:20px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:16px;font-weight:700}
+    .write .hint:disabled{opacity:.4}
+    .write .say{font-size:17px;color:var(--muted);min-height:24px}
+
+    .result{font-size:22px;font-weight:800;text-align:center}
+    .result.good{color:#7fd69a}.result.bad{color:#ff8a8a}
+    .next{height:58px;border-radius:14px;border:none;background:var(--accent);color:var(--wood-dark);font-size:20px;font-weight:800}
+    .next[hidden],.result[hidden]{display:none}
+
+    /* 덮개 공통 (환영·시작·끝) */
+    .layer{position:fixed;inset:56px 0 0 0;z-index:5;background:var(--wood);display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:20px 5vw;gap:14px;overflow-y:auto}
+    .layer[hidden]{display:none}
+    .layer h2{font-size:clamp(24px,6vw,32px);color:var(--accent)}
+    .layer p{font-size:18px;color:var(--muted);line-height:1.7;word-break:keep-all}
+    .big{padding:16px 40px;border-radius:40px;border:none;background:var(--red);color:#fff;font-size:21px;font-weight:800}
+    .ghost{padding:12px 28px;border-radius:40px;border:1.5px solid #fff;background:none;color:#fff;font-size:17px;font-weight:700}
+
+    /* 환영 장면 */
+    .intro{background:#1a1411;cursor:pointer}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;color:#fff;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    /* 시작 화면 */
+    .modes{display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px}
+    .modes button{padding:12px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--wood-dark);color:#fff;text-align:left;
+      font-size:19px;font-weight:800;line-height:1.35}
+    .modes button small{display:block;font-size:15px;font-weight:600;color:var(--muted)}
+    .modes button.on{border-color:var(--accent);background:rgba(240,163,123,.18)}
+    .size{display:flex;gap:8px}
+    .size button{padding:10px 22px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:18px;font-weight:700}
+    .size button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .auto{display:flex;align-items:center;gap:10px;font-size:17px;color:var(--muted);cursor:pointer}
+    .auto input{width:22px;height:22px;accent-color:var(--accent)}
+    .record{font-size:16px;color:var(--muted)}
+
+    /* 끝 화면 */
+    .done{justify-content:flex-start}
+    .review{width:100%;max-width:560px;display:flex;flex-direction:column;gap:8px;text-align:left}
+    .review h3{font-size:18px;color:var(--accent);margin-top:4px}
+    .review div{background:var(--cream);color:var(--wood-dark);border-radius:12px;padding:10px 14px}
+    .review b{display:block;font-size:19px;line-height:1.4;word-break:keep-all}
+    .review span{display:block;font-size:16px;color:#5a4a3f;line-height:1.5;margin-top:2px;word-break:keep-all}
+    .prize{width:min(70vw,300px);border-radius:14px;overflow:hidden;border:2px solid var(--purple);background:var(--wood-dark);animation:pop .6s ease}
+    .prize img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+    .prize figcaption{font-size:18px;font-weight:800;padding:8px 6px;color:#fff}
+    .done .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding-bottom:10px}
+    @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+    @media (max-width:640px){
+      .top h1 .long{display:none}
+      .info .val{font-size:19px}
+      .choices button{min-height:56px;font-size:19px}
+    }
+  </style>
+  <style>
+    .hj{font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-weight:700}
+    /* 구 한 줄: 네 칸 */
+    .gu{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+    .gu .c{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 2px;border-radius:10px}
+    .gu .c .h{font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-weight:700;font-size:clamp(40px,12vw,58px);line-height:1.15;color:var(--wood-dark)}
+    .gu .c .hun{font-size:15px;font-weight:700;color:#6a5444;line-height:1.25;text-align:center;word-break:keep-all;min-height:2.5em;display:flex;flex-direction:column;justify-content:center}
+    .gu .c .hun small{font-size:13px;color:#a08c7c;font-weight:600}
+    .gu .c .eum{font-size:19px;font-weight:800;color:var(--red)}
+    .gu .c.blank .h{color:var(--red)}
+    .gu .c.blank{background:#fde8e8;outline:2px dashed var(--red)}
+    .gu .c.ans{background:#e3f4e8;outline:2px solid var(--green)}
+    .gu .c.ans .h{color:var(--green)}
+    .read{text-align:center;font-size:20px;font-weight:800;color:#7a5e4a;letter-spacing:.15em}
+    .mean2{font-size:18px;line-height:1.6;color:#4a3b31;text-align:center;word-break:keep-all;border-top:1px dashed #d8c8b8;padding-top:10px}
+    .mean2[hidden]{display:none}
+    .one{font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-weight:700;font-size:clamp(90px,28vw,130px);line-height:1.1;text-align:center;color:var(--wood-dark)}
+    .one-sub{text-align:center;font-size:18px;color:#7a5e4a;font-weight:700}
+    .one-sub[hidden]{display:none}
+    /* 보기: 한자 카드 */
+    .choices.hcards{display:grid;grid-template-columns:1fr 1fr}
+    .choices.hcards button{flex-direction:column;align-items:center;text-align:center;gap:2px;padding:10px 6px}
+    .choices.hcards button .bh{font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-size:44px;font-weight:700;line-height:1.1}
+    .choices.hcards button .bt{font-size:17px;font-weight:700}
+    .choices.hcards button i{display:none}
+    /* 순서 맞추기 타일 */
+    .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .tiles[hidden]{display:none}
+    .tiles button{height:96px;border-radius:14px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .tiles button .bh{font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-size:46px;font-weight:700;line-height:1.1}
+    .tiles button .bt{font-size:15px;color:var(--muted);font-weight:700}
+    .tiles button.used{visibility:hidden}
+    .tiles button.shake{animation:shake .35s;border-color:var(--red);background:var(--red)}
+    @keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+    .gu .c.empty .h{color:#d8c8b8}
+    /* 공부 카드 넘기기 */
+    .pager{display:flex;gap:10px}
+    .pager[hidden]{display:none}
+    .pager button{flex:1;height:58px;border-radius:14px;border:none;font-size:19px;font-weight:800}
+    .pager .prev{background:var(--wood-dark);color:#fff;border:1.5px solid var(--line)}
+    .pager .nxt{background:var(--accent);color:var(--wood-dark)}
+    .pager button:disabled{opacity:.35}
+    /* 마당 고르기 */
+    .madang{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%;max-width:440px}
+    .madang button{padding:6px 0 4px;border-radius:10px;border:1.5px solid var(--line);background:var(--wood-dark);color:#fff;font-size:17px;font-weight:800;line-height:1.2}
+    .madang button small{display:block;font-size:11px;color:#ffd46b;letter-spacing:-1px;min-height:13px}
+    .madang button.on{border-color:var(--accent);background:var(--accent);color:var(--wood-dark)}
+    .madang button.on small{color:var(--red)}
+    .madang button:disabled{opacity:.35}
+    .mtitle{font-size:17px;color:#fff;font-weight:700}
+    .mtitle .hj{color:var(--accent);font-size:20px;letter-spacing:.1em}
+    .modes.four{display:grid;grid-template-columns:1fr 1fr}
+    .modes.four button{font-size:17px}
+    .modes.four button small{font-size:13px}
+    .review .hj{font-size:22px;letter-spacing:.08em}
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1><span class="hj">千</span> <span class="long">국단비 놀이터 · </span>천자문</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <div class="info">
+    <div class="box"><div class="label" id="lbl1">문제</div><div class="val" id="qno">1<small>/10</small></div></div>
+    <div class="box"><div class="label">마당</div><div class="val" id="mdg">1</div></div>
+    <div class="box"><div class="label" id="lbl3">맞힘</div><div class="val" id="right">0</div></div>
+  </div>
+
+  <div class="card">
+    <span class="mode" id="modeTag"></span>
+    <button class="speak" id="speakBtn" aria-label="읽어 주기">🔈</button>
+    <div id="q"></div>
+    <div class="mean2" id="mean" hidden></div>
+  </div>
+
+  <div class="result" id="result" hidden></div>
+  <div class="choices" id="choices"></div>
+  <div class="tiles" id="tiles" hidden></div>
+  <div class="pager" id="pager" hidden><button class="prev" id="prevBtn">◀ 앞 구절</button><button class="nxt" id="pnextBtn">다음 구절 ▶</button></div>
+  <button class="next" id="nextBtn" hidden>다음 문제 ▶</button>
+</main>
+
+<!-- 환영 장면 -->
+<div class="layer intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<!-- 시작 화면 -->
+<div class="layer" id="start" hidden>
+  <h2><span class="hj">千</span> 천자문 (한자 공부)</h2>
+  <p class="mtitle" id="mtitle"></p>
+  <div class="madang" id="madang"></div>
+  <div class="modes four" id="modes">
+    <button data-m="0">① 공부 카드<small>한 구절씩 보고 듣기</small></button>
+    <button data-m="1">② 훈음 맞추기<small>한자를 보고 훈과 음 고르기</small></button>
+    <button data-m="2">③ 빈칸 채우기<small>빈 자리에 알맞은 한자 넣기</small></button>
+    <button data-m="3">④ 순서 맞추기<small>섞인 네 글자를 차례로 누르기</small></button>
+  </div>
+  <label class="auto"><input type="checkbox" id="autoRead"> 자동으로 읽어 주기</label>
+  <label class="auto"><input type="checkbox" id="openAll"> 모든 마당 열기 (순서 없이 고르기)</label>
+  <button class="big" id="startBtn">시작하기</button>
+  <p class="record" id="record"></p>
+</div>
+
+<!-- 끝 화면 -->
+<div class="layer done" id="done" hidden>
+  <h2 id="doneTitle"></h2>
+  <p id="doneText"></p>
+  <figure class="prize" id="prize" hidden><img id="prizeImg" alt=""><figcaption id="prizeName"></figcaption></figure>
+  <div class="review" id="review"></div>
+  <div class="btns">
+    <button class="big" id="againBtn">한 판 더</button>
+    <button class="ghost" id="nextMdBtn" hidden>다음 마당 ▶</button>
+    <button class="ghost" id="modeBtn">처음 화면</button>
+    <a class="ghost" href="index.html#playground">놀이터로</a>
+  </div>
+</div>
+
+<script src="assets/js/flowers.js"></script>
+<script src="assets/js/chunja.js"></script>
+<script>
+/* ===== 설정 (주인님이 고치기 쉬운 곳) ===== */
+const PER = 10;                        // 한 마당 구절 수 (10구 = 40자)
+const ROUND = 10;                      // 한 판 문제 수
+const STARS = [6, 8, 10];              // 별 1·2·3개 기준 (맞힌 수). 별 1개부터 다음 마당 열림
+const GIFT_AT = 8;                     // 이만큼 맞히면 꽃 선물
+const SPEECH_RATE = 0.9;               // 읽어 주기 빠르기
+const MODE_NAMES = ['공부 카드', '훈음 맞추기', '빈칸 채우기', '순서 맞추기'];
+const IMG_DIR = 'assets/img/flowers/';
+
+/* ===== 저장 ===== */
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+const MAX_MD = Math.ceil(CHUNJA.length / PER);
+let stars = (() => { try { const a = JSON.parse(load('gukdanbi-chunja-stars', '[]')); return Array.isArray(a) ? a : []; } catch (e) { return []; } })();
+let mode = Math.min(3, Math.max(0, Number(load('gukdanbi-chunja-mode', 0)) || 0));
+let md = Math.min(MAX_MD - 1, Math.max(0, Number(load('gukdanbi-chunja-md', 0)) || 0));
+let autoRead = load('gukdanbi-chunja-auto', 'off') === 'on';
+let openAll = load('gukdanbi-chunja-open', 'off') === 'on';
+const isOpen = m => openAll || m === 0 || (stars[m - 1] || 0) > 0 || (stars[m] || 0) > 0;
+if (!isOpen(md)) md = 0;
+
+/* ===== 효과음 ===== */
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('tick'); };
+const SOUNDS = {
+  tick:  [[660, .05]],
+  right: [[523, .09], [659, .09], [784, .16]],
+  wrong: [[262, .15, 'triangle'], [220, .22, 'triangle']],
+  done:  [[523, .12], [659, .12], [784, .12], [1047, .35]],
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 읽어 주기 ===== */
+const canSpeak = 'speechSynthesis' in window;
+let koVoice = null;
+function findVoice() { if (!canSpeak) return; koVoice = speechSynthesis.getVoices().find(v => /^ko/i.test(v.lang)) || null; }
+if (canSpeak) { findVoice(); speechSynthesis.onvoiceschanged = findVoice; }
+const speakBtn = document.getElementById('speakBtn');
+function speak(text) {
+  if (!canSpeak) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'ko-KR'; u.rate = SPEECH_RATE; if (koVoice) u.voice = koVoice;
+  u.onstart = () => speakBtn.classList.add('on');
+  u.onend = u.onerror = () => speakBtn.classList.remove('on');
+  speechSynthesis.speak(u);
+}
+function stopSpeak() { if (canSpeak) speechSynthesis.cancel(); speakBtn.classList.remove('on'); }
+if (!canSpeak) speakBtn.hidden = true;
+
+/* ===== 자료 정리 ===== */
+// 글자 하나: { h:한자, hun:'따(땅)', eum:'지', full:'따(땅) 지', say:'따 지' }
+const GU = CHUNJA.map(([h, rd, hun, mean], i) => ({
+  i, h, rd, mean,
+  ch: hun.split('|').map((x, k) => {
+    const p = x.lastIndexOf(' '), hn = x.slice(0, p), eum = x.slice(p + 1);
+    return { h: h[k], hun: hn, eum, full: x, say: hn.replace(/\(.*?\)/g, '') + ' ' + eum };
+  }),
+}));
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const mdGu = m => GU.slice(m * PER, m * PER + PER);
+const mdChars = m => mdGu(m).flatMap(g => g.ch);
+const hunHTML = c => { const m = c.hun.match(/^(.*?)\((.*)\)$/); return m ? `${esc(m[1])}<small>(${esc(m[2])})</small>` : esc(c.hun); };
+function guHTML(g, opt = {}) {
+  return '<div class="gu">' + g.ch.map((c, k) => {
+    if (opt.blank === k) return `<div class="c blank"><span class="h">?</span><span class="hun">&nbsp;</span><span class="eum">&nbsp;</span></div>`;
+    if (opt.hide && opt.hide[k]) return `<div class="c empty"><span class="h">□</span><span class="hun">&nbsp;</span><span class="eum">&nbsp;</span></div>`;
+    return `<div class="c${opt.ans === k ? ' ans' : ''}"><span class="h">${c.h}</span><span class="hun">${hunHTML(c)}</span><span class="eum">${c.eum}</span></div>`;
+  }).join('') + '</div>';
+}
+const guSay = g => g.rd + '. ' + g.ch.map(c => c.say).join(', ') + '. ' + g.mean;
+
+/* ===== 화면 요소 ===== */
+const $ = id => document.getElementById(id);
+const qEl = $('q'), meanEl = $('mean'), choicesEl = $('choices'), tilesEl = $('tiles'), resultEl = $('result'), nextBtn = $('nextBtn');
+
+/* ===== 게임 상태 ===== */
+let qs = [], idx = 0, right = 0, missed = [], cur = null, answered = false, blankAt = 0, order = 0, slip = false;
+
+function updateInfo() {
+  const study = mode === 0;
+  $('lbl1').textContent = study ? '구절' : '문제';
+  $('qno').innerHTML = `${Math.min(idx + 1, qs.length)}<small>/${qs.length}</small>`;
+  $('mdg').textContent = md + 1;
+  $('lbl3').textContent = study ? '글자' : '맞힘';
+  $('right').textContent = study ? (idx + 1) * 4 + '자' : right;
+}
+function clearArea() {
+  resultEl.hidden = true; nextBtn.hidden = true; meanEl.hidden = true;
+  choicesEl.innerHTML = ''; choicesEl.className = 'choices'; tilesEl.hidden = true; tilesEl.innerHTML = ''; $('pager').hidden = true;
+}
+
+function newRound() {
+  $('start').hidden = true; $('done').hidden = true; stopSpeak();
+  idx = 0; right = 0; missed = [];
+  if (mode === 0 || mode === 2 || mode === 3) qs = mode === 0 ? mdGu(md) : shuffle(mdGu(md));
+  else qs = shuffle(mdChars(md)).slice(0, ROUND);
+  show();
+}
+
+function show() {
+  cur = qs[idx]; answered = false; slip = false;
+  clearArea(); updateInfo();
+  $('modeTag').textContent = `${md + 1}마당 · ${MODE_NAMES[mode]}`;
+  if (mode === 0) showStudy();
+  else if (mode === 1) showHunEum();
+  else if (mode === 2) showBlank();
+  else showOrder();
+  window.scrollTo(0, 0);
+  if (autoRead) readQ(); else stopSpeak();
+}
+
+/* ① 공부 카드 */
+function showStudy() {
+  qEl.innerHTML = guHTML(cur) + `<div class="read">${cur.rd}</div>`;
+  meanEl.textContent = cur.mean; meanEl.hidden = false;
+  $('pager').hidden = false;
+  $('prevBtn').disabled = idx === 0;
+  $('pnextBtn').textContent = idx + 1 >= qs.length ? '다 봤어요 ✔' : '다음 구절 ▶';
+}
+$('prevBtn').onclick = () => { if (idx > 0) { idx--; show(); } };
+$('pnextBtn').onclick = () => {
+  stopSpeak();
+  if (idx + 1 < qs.length) { idx++; show(); return; }
+  $('doneTitle').textContent = `📖 ${md + 1}마당 공부 끝!`;
+  $('doneText').innerHTML = `${PER}구절 ${PER * 4}자를 모두 보셨습니다.<br>이제 ② 훈음 맞추기로 확인해 볼까요?`;
+  $('prize').hidden = true; $('review').innerHTML = ''; $('nextMdBtn').hidden = true;
+  $('againBtn').textContent = '② 훈음 맞추기로';
+  $('againBtn').onclick = () => { mode = 1; save('gukdanbi-chunja-mode', mode); newRound(); };
+  $('done').hidden = false; beep('done');
+};
+
+/* ② 훈음 맞추기 */
+function showHunEum() {
+  qEl.innerHTML = `<div class="one">${cur.h}</div><div class="one-sub" id="oneSub" hidden></div>`;
+  const wrongs = shuffle(mdChars(md).filter(c => c !== cur && c.full !== cur.full && c.eum !== cur.eum)).slice(0, 3);
+  makeChoices(shuffle([cur, ...wrongs]).map(c => [`${esc(c.full)}`, c === cur]));
+}
+/* ③ 빈칸 채우기 */
+function showBlank() {
+  blankAt = Math.floor(Math.random() * 4);
+  qEl.innerHTML = guHTML(cur, { blank: blankAt });
+  const ans = cur.ch[blankAt];
+  const wrongs = shuffle(mdChars(md).filter(c => c !== ans && c.eum !== ans.eum)).slice(0, 3);
+  choicesEl.className = 'choices hcards';
+  makeChoices(shuffle([ans, ...wrongs]).map(c => [`<span class="bh">${c.h}</span><span class="bt">${esc(c.full)}</span>`, c === ans]));
+}
+/* ④ 순서 맞추기 */
+function showOrder() {
+  order = 0;
+  qEl.innerHTML = guHTML(cur, { hide: [1, 1, 1, 1] }) + `<div class="read" id="ordRead">&nbsp;</div>`;
+  meanEl.textContent = cur.mean; meanEl.hidden = false;
+  let mix; do { mix = shuffle([0, 1, 2, 3]); } while (mix.join() === '0,1,2,3');
+  tilesEl.innerHTML = mix.map(k => `<button data-k="${k}"><span class="bh">${cur.ch[k].h}</span><span class="bt">${cur.ch[k].eum}</span></button>`).join('');
+  tilesEl.hidden = false;
+  [...tilesEl.children].forEach(b => b.onclick = () => tapTile(b));
+}
+function tapTile(b) {
+  if (answered) return;
+  const k = Number(b.dataset.k);
+  if (k === order) {
+    b.classList.add('used'); order++; beep('tick');
+    const hide = [0, 1, 2, 3].map(i => i >= order);
+    qEl.innerHTML = guHTML(cur, { hide }) + `<div class="read">${cur.rd.slice(0, order)}</div>`;
+    if (order === 4) finishQ(!slip);
+  } else {
+    slip = true; beep('wrong');
+    b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+    setTimeout(() => b.classList.remove('shake'), 400);
+  }
+}
+
+function makeChoices(list) {
+  choicesEl.innerHTML = list.map(([html, ok], i) => `<button data-ok="${ok ? 1 : 0}"><i>${i + 1}</i><span style="display:contents">${html}</span></button>`).join('');
+  [...choicesEl.children].forEach(b => b.onclick = () => choose(b));
+}
+function choose(btn) {
+  if (answered) return;
+  const ok = btn.dataset.ok === '1';
+  [...choicesEl.children].forEach(b => {
+    b.disabled = true;
+    if (b.dataset.ok === '1') b.classList.add('right');
+    else if (b === btn) b.classList.add('wrong');
+    else b.classList.add('dim');
+  });
+  finishQ(ok);
+}
+function finishQ(ok) {
+  answered = true;
+  if (mode === 1) {
+    const g = GU.find(x => x.ch.includes(cur));
+    const k = g.ch.indexOf(cur);
+    $('oneSub').innerHTML = `${esc(cur.full)}<br><span style="font-size:15px;color:#a08c7c">${g.h} (${g.rd}) 의 ${k + 1}번째 글자</span>`;
+    $('oneSub').hidden = false;
+    meanEl.innerHTML = guHTML(g, { ans: k }) + `<div style="margin-top:6px">${esc(g.mean)}</div>`; meanEl.hidden = false;
+  } else if (mode === 2) {
+    qEl.innerHTML = guHTML(cur, { ans: blankAt }) + `<div class="read">${cur.rd}</div>`;
+    meanEl.textContent = cur.mean; meanEl.hidden = false;
+  } else {
+    qEl.innerHTML = guHTML(cur) + `<div class="read">${cur.rd}</div>`;
+  }
+  if (ok) { right++; resultEl.className = 'result good'; resultEl.textContent = mode === 3 ? '딩동댕! 한 번에 맞혔습니다' : '딩동댕! 맞았습니다'; beep('right'); }
+  else { missed.push(cur); resultEl.className = 'result bad'; resultEl.textContent = mode === 3 ? '완성! 다음엔 한 번에 해 봐요' : '아쉬워요! 다시 한번 보세요'; if (mode !== 3) beep('wrong'); }
+  resultEl.hidden = false;
+  updateInfo();
+  nextBtn.textContent = idx + 1 >= qs.length ? '🌷 결과 보기' : '다음 문제 ▶';
+  nextBtn.hidden = false;
+  if (autoRead) readA();
+  setTimeout(() => nextBtn.scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 100);
+}
+nextBtn.onclick = () => { stopSpeak(); idx++; idx >= qs.length ? finish() : show(); };
+
+/* 읽어 주기 */
+function readQ() {
+  if (mode === 0) speak(guSay(cur));
+  else if (mode === 1) speak('이 한자의 훈과 음은 무엇일까요?');
+  else if (mode === 2) speak(cur.ch.map((c, k) => k === blankAt ? '무엇' : c.say).join(', ') + '. 빈칸에 들어갈 글자는?');
+  else speak(cur.mean + '. 네 글자를 차례대로 누르세요.');
+}
+function readA() {
+  if (mode === 1) speak(cur.say);
+  else speak(guSay(cur));
+}
+speakBtn.onclick = () => (mode === 0 || !answered) ? readQ() : readA();
+
+/* ===== 한 판 끝 ===== */
+function finish() {
+  const n = qs.length, st = STARS.filter(x => right >= x * n / ROUND).length;
+  const prev = stars[md] || 0;
+  if (st > prev) { stars[md] = st; save('gukdanbi-chunja-stars', JSON.stringify(stars)); }
+  const opened = st > 0 && prev === 0 && md + 1 < MAX_MD && !openAll;
+  $('doneTitle').textContent = right === n ? '🎉 모두 맞히셨습니다!' : st ? '🎉 잘하셨습니다!' : '수고하셨습니다!';
+  $('doneText').innerHTML = `${md + 1}마당 · ${MODE_NAMES[mode]}<br>${n}문제 중 <b>${right}개</b> 맞힘 ${st ? '<span style="color:#ffd46b">' + '★'.repeat(st) + '</span>' : ''}<br>`
+    + (opened ? `🔓 <b>${md + 2}마당</b>이 열렸습니다!` : st ? '' : `${STARS[0]}개 이상 맞히면 별을 받아요`);
+  if (right >= GIFT_AT * n / ROUND && typeof FLOWERS !== 'undefined' && FLOWERS.length) {
+    const g = pick(FLOWERS);
+    $('prizeImg').src = IMG_DIR + g.file; $('prizeImg').alt = g.name;
+    $('prizeName').textContent = '🎁 국단비님의 선물 · 🌸 ' + g.name;
+    $('prize').hidden = false;
+  } else $('prize').hidden = true;
+  const missGu = [...new Set(missed.map(x => x.ch ? x : GU.find(g => g.ch.includes(x))))];
+  $('review').innerHTML = missGu.length
+    ? '<h3>📖 다시 보기 — 틀린 구절</h3>' + missGu.map(g =>
+        `<div><b><span class="hj">${g.h}</span> ${g.rd}</b><span>${g.ch.map(c => esc(c.full)).join(' · ')}</span><span>${esc(g.mean)}</span></div>`).join('')
+    : '';
+  $('againBtn').textContent = '한 판 더'; $('againBtn').onclick = newRound;
+  $('nextMdBtn').hidden = !(st > 0 && md + 1 < MAX_MD);
+  $('done').hidden = false; $('done').scrollTop = 0;
+  beep('done');
+}
+$('nextMdBtn').onclick = () => { md++; save('gukdanbi-chunja-md', md); mode = 0; save('gukdanbi-chunja-mode', mode); newRound(); };
+$('modeBtn').onclick = () => { $('done').hidden = true; showStart(); };
+
+/* ===== 시작 화면 ===== */
+function showStart() {
+  stopSpeak(); clearArea();
+  $('madang').innerHTML = Array.from({ length: MAX_MD }, (_, m) =>
+    `<button data-md="${m}"${isOpen(m) ? '' : ' disabled'}${m === md ? ' class="on"' : ''}>${m + 1}<small>${'★'.repeat(stars[m] || 0) || (isOpen(m) ? '' : '🔒')}</small></button>`).join('');
+  [...$('madang').children].forEach(b => b.onclick = () => { md = Number(b.dataset.md); save('gukdanbi-chunja-md', md); showStart(); });
+  const g = mdGu(md);
+  $('mtitle').innerHTML = `${md + 1}마당 · <span class="hj">${g[0].h}</span> ~ <span class="hj">${g[g.length - 1].h}</span>`;
+  document.querySelectorAll('#modes button').forEach(b => b.classList.toggle('on', Number(b.dataset.m) === mode));
+  $('autoRead').checked = autoRead; $('autoRead').parentElement.hidden = !canSpeak;
+  $('openAll').checked = openAll;
+  const total = stars.filter(Boolean).length;
+  $('record').textContent = total ? `별 받은 마당 ${total} / ${MAX_MD}` : `250구절 · 1000자 · ${MAX_MD}마당이 기다리고 있어요`;
+  $('start').hidden = false;
+}
+document.querySelectorAll('#modes button').forEach(b => b.onclick = () => { mode = Number(b.dataset.m); save('gukdanbi-chunja-mode', mode); showStart(); });
+$('autoRead').onchange = e => { autoRead = e.target.checked; save('gukdanbi-chunja-auto', autoRead ? 'on' : 'off'); };
+$('openAll').onchange = e => { openAll = e.target.checked; save('gukdanbi-chunja-open', openAll ? 'on' : 'off'); if (!isOpen(md)) md = 0; showStart(); };
+$('startBtn').onclick = newRound;
+
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopSpeak(); });
+
+/* ===== 환영 장면 ===== */
+const intro = $('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true; intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; showStart(); }, 450);
+}
+intro.onclick = endIntro;
+setTimeout(endIntro, 3500);
+
+/* ===== 키보드 (맥북): 1~4 고르기, 엔터 다음 ===== */
+document.addEventListener('keydown', e => {
+  if (!introDone) { if (e.key === 'Enter' || e.key === ' ') endIntro(); return; }
+  if (!$('start').hidden || !$('done').hidden) { if (e.key === 'Enter') (!$('start').hidden ? $('startBtn') : $('againBtn')).click(); return; }
+  if (mode === 0) { if (e.key === 'ArrowRight' || e.key === 'Enter') $('pnextBtn').click(); else if (e.key === 'ArrowLeft') $('prevBtn').click(); return; }
+  if ('1234'.includes(e.key) && e.key) { const b = (mode === 3 ? tilesEl : choicesEl).children[Number(e.key) - 1]; if (b) b.click(); }
+  else if (e.key === 'Enter' && !nextBtn.hidden) { e.preventDefault(); nextBtn.click(); }
+});
+</script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
