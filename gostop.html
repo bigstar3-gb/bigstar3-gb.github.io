@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 맞고</title>
+  <meta name="description" content="국단비 놀이터 — 컴퓨터와 둘이 치는 맞고(고스톱). 돈 없이 점수만 쌓는 놀이">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3d2a23">
+  <link rel="apple-touch-icon" href="assets/img/app/apple-touch-icon.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --green:#3f9b5a; --purple:#c9a4ff; --cream:#fffaf3;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      -webkit-user-select:none;user-select:none;touch-action:manipulation}
+    a{color:inherit;text-decoration:none}
+    button,input{font-family:var(--font)}
+    button{cursor:pointer}
+
+    /* 상단 띠 */
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;font-size:20px}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{width:100%;max-width:720px;display:flex;flex-direction:column;padding:12px 4vw 24px;gap:12px}
+
+    /* 위 정보 줄 */
+    .info{display:flex;gap:10px}
+    .info .box{flex:1;background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center}
+    .info .label{font-size:13px;color:var(--muted)}
+    .info .val{font-size:22px;font-weight:800;line-height:1.3}
+    .info .val small{font-size:15px;color:var(--muted);font-weight:600}
+
+    /* 속담 카드 */
+    .card{position:relative;background:var(--cream);color:var(--wood-dark);border:2px solid var(--red);border-radius:14px;
+      padding:44px 18px 18px;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+    .card .q{font-size:clamp(24px,6.4vw,32px);font-weight:800;line-height:1.55;word-break:keep-all;text-align:center}
+    .card .q .blank{display:inline-block;min-width:2.2em;padding:0 .2em;border-bottom:3px solid var(--red);color:var(--red);letter-spacing:.08em}
+    .card .q .ans{color:var(--green);border-bottom:3px solid var(--green)}
+    .card .q .tail{color:#b9a99a}
+    .card .mean{font-size:18px;line-height:1.6;color:#5a4a3f;text-align:center;word-break:keep-all;border-top:1px dashed #d8c8b8;padding-top:10px}
+    .card .mean[hidden]{display:none}
+    .card .mode{position:absolute;left:12px;top:8px;font-size:13px;font-weight:700;color:#a08c7c}
+    .speak{position:absolute;right:8px;top:6px;width:46px;height:40px;border-radius:10px;border:1.5px solid #d8c8b8;background:#fff;font-size:21px}
+    .speak.on{background:var(--accent);border-color:var(--accent)}
+
+    /* 보기 버튼 */
+    .choices{display:flex;flex-direction:column;gap:10px}
+    .choices button{min-height:60px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;
+      font-size:21px;font-weight:800;word-break:keep-all;line-height:1.3;text-align:left;display:flex;gap:12px;align-items:center}
+    .choices button i{font-style:normal;flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);
+      font-size:16px;display:flex;align-items:center;justify-content:center}
+    .choices button:disabled{cursor:default}
+    .choices button.right{background:var(--green);border-color:var(--green)}
+    .choices button.wrong{background:var(--red);border-color:var(--red)}
+    .choices button.dim{opacity:.45}
+
+    /* 직접 쓰기 */
+    .write{display:flex;flex-direction:column;gap:10px}
+    .write[hidden],.choices[hidden]{display:none}
+    .write .row{display:flex;gap:8px}
+    .write input{flex:1;min-width:0;height:60px;border-radius:14px;border:2px solid var(--accent);background:#fff;color:var(--wood-dark);
+      font-size:24px;font-weight:800;padding:0 14px;-webkit-user-select:text;user-select:text}
+    .write input:disabled{opacity:.6}
+    .write .ok{flex:none;width:96px;border-radius:14px;border:none;background:var(--red);color:#fff;font-size:20px;font-weight:800}
+    .write .hint{align-self:flex-start;padding:8px 16px;border-radius:20px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:16px;font-weight:700}
+    .write .hint:disabled{opacity:.4}
+    .write .say{font-size:17px;color:var(--muted);min-height:24px}
+
+    .result{font-size:22px;font-weight:800;text-align:center}
+    .result.good{color:#7fd69a}.result.bad{color:#ff8a8a}
+    .next{height:58px;border-radius:14px;border:none;background:var(--accent);color:var(--wood-dark);font-size:20px;font-weight:800}
+    .next[hidden],.result[hidden]{display:none}
+
+    /* 덮개 공통 (환영·시작·끝) */
+    .layer{position:fixed;inset:56px 0 0 0;z-index:5;background:var(--wood);display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:20px 5vw;gap:14px;overflow-y:auto}
+    .layer[hidden]{display:none}
+    .layer h2{font-size:clamp(24px,6vw,32px);color:var(--accent)}
+    .layer p{font-size:18px;color:var(--muted);line-height:1.7;word-break:keep-all}
+    .big{padding:16px 40px;border-radius:40px;border:none;background:var(--red);color:#fff;font-size:21px;font-weight:800}
+    .ghost{padding:12px 28px;border-radius:40px;border:1.5px solid #fff;background:none;color:#fff;font-size:17px;font-weight:700}
+
+    /* 환영 장면 */
+    .intro{background:#1a1411;cursor:pointer}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;color:#fff;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    /* 시작 화면 */
+    .modes{display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px}
+    .modes button{padding:12px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--wood-dark);color:#fff;text-align:left;
+      font-size:19px;font-weight:800;line-height:1.35}
+    .modes button small{display:block;font-size:15px;font-weight:600;color:var(--muted)}
+    .modes button.on{border-color:var(--accent);background:rgba(240,163,123,.18)}
+    .size{display:flex;gap:8px}
+    .size button{padding:10px 22px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:18px;font-weight:700}
+    .size button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .auto{display:flex;align-items:center;gap:10px;font-size:17px;color:var(--muted);cursor:pointer}
+    .auto input{width:22px;height:22px;accent-color:var(--accent)}
+    .record{font-size:16px;color:var(--muted)}
+
+    /* 끝 화면 */
+    .done{justify-content:flex-start}
+    .review{width:100%;max-width:560px;display:flex;flex-direction:column;gap:8px;text-align:left}
+    .review h3{font-size:18px;color:var(--accent);margin-top:4px}
+    .review div{background:var(--cream);color:var(--wood-dark);border-radius:12px;padding:10px 14px}
+    .review b{display:block;font-size:19px;line-height:1.4;word-break:keep-all}
+    .review span{display:block;font-size:16px;color:#5a4a3f;line-height:1.5;margin-top:2px;word-break:keep-all}
+    .prize{width:min(70vw,300px);border-radius:14px;overflow:hidden;border:2px solid var(--purple);background:var(--wood-dark);animation:pop .6s ease}
+    .prize img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+    .prize figcaption{font-size:18px;font-weight:800;padding:8px 6px;color:#fff}
+    .done .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding-bottom:10px}
+    @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+    @media (max-width:640px){
+      .top h1 .long{display:none}
+      .info .val{font-size:19px}
+      .choices button{min-height:56px;font-size:19px}
+    }
+  </style>
+  <style>
+    body{overflow-x:hidden}
+    main{gap:8px;padding-top:8px}
+    .howto{background:var(--wood-dark);border:1px solid var(--line);border-radius:14px;padding:14px 18px;text-align:left;max-width:440px}
+    .howto p{font-size:16px}
+    .zone{background:rgba(0,0,0,.16);border-radius:12px;padding:6px 8px}
+    .who{display:flex;align-items:center;justify-content:space-between;font-size:15px;font-weight:700;color:var(--muted)}
+    .who b{color:#fff;font-size:17px}
+    .who .sc{background:var(--accent);color:var(--wood-dark);border-radius:12px;padding:1px 10px;font-size:16px}
+    .who .go{background:var(--red);color:#fff;border-radius:12px;padding:1px 8px;font-size:14px;margin-left:4px}
+    .backs{display:flex;gap:2px;height:30px}
+    .backs img{height:30px}
+    .cap{display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:4px;min-height:36px}
+    .grp{display:flex;align-items:center}
+    .grp img{height:36px;margin-right:-14px;filter:drop-shadow(1px 0 1px rgba(0,0,0,.4))}
+    .grp img:last-of-type{margin-right:2px}
+    .grp em{font-style:normal;font-size:13px;color:var(--muted);margin-left:6px}
+    .floorWrap{display:flex;gap:8px;align-items:flex-start}
+    .floor{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;min-height:150px;background:#2f5a3a;border-radius:12px;padding:8px}
+    .fs{position:relative;height:64px}
+    .fs img{position:absolute;top:0;height:60px;filter:drop-shadow(1px 1px 1px rgba(0,0,0,.5));transition:transform .2s}
+    .fs.hot img{filter:drop-shadow(0 0 6px #ffd46b)}
+    .deck{width:56px;text-align:center;flex:none}
+    .deck img{width:46px}
+    .deck b{display:block;font-size:14px;color:var(--muted)}
+    .msg{text-align:center;font-size:17px;font-weight:700;color:var(--accent);min-height:24px}
+    .hand{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+    .hand .hc{position:relative;cursor:pointer}
+    .hand img{width:100%;display:block;transition:transform .15s}
+    .hand .hc.up img{transform:translateY(-10px);filter:drop-shadow(0 0 6px #ffd46b)}
+    .hand .hc.match::after{content:'';position:absolute;left:30%;right:30%;bottom:-6px;height:5px;border-radius:3px;background:#7fd69a}
+    .hand .hc.off{opacity:.55}
+    .tip{font-size:13px;color:var(--muted);text-align:center}
+    /* 고르기·고스톱 창 */
+    .modal{position:fixed;inset:0;z-index:8;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+    .modal[hidden]{display:none}
+    .box2{background:var(--wood);border:2px solid var(--accent);border-radius:16px;padding:18px;text-align:center;max-width:380px;width:100%}
+    .box2 h3{font-size:22px;color:var(--accent);margin-bottom:8px}
+    .box2 p{font-size:17px;color:var(--muted);line-height:1.6;word-break:keep-all}
+    .box2 .opts{display:flex;gap:14px;justify-content:center;margin-top:12px}
+    .box2 .opts img{width:96px;cursor:pointer}
+    .box2 .btns{display:flex;gap:10px;justify-content:center;margin-top:14px}
+    .tbl{width:100%;font-size:16px;border-collapse:collapse;margin:8px 0}
+    .tbl td{padding:4px 6px;border-bottom:1px dashed var(--line);text-align:left;color:var(--muted)}
+    .tbl td:last-child{text-align:right;color:#fff;font-weight:700}
+    .opts2{display:flex;flex-direction:column;gap:10px;align-items:center}
+    .seg{display:flex;gap:8px}
+    .seg button{padding:10px 18px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:17px;font-weight:700}
+    .seg button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .chk{display:flex;align-items:center;gap:8px;font-size:16px;color:var(--muted)}
+    .chk input{width:22px;height:22px;accent-color:var(--accent)}
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="hwatu.html"><img src="assets/img/etc/heart.png" alt="">화투</a>
+  <h1><img src="assets/img/hwatu/08-1.png" alt="" style="height:26px;vertical-align:-6px"> <span class="long">화투 한마당 · </span>맞고</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <div class="zone">
+    <div class="who"><span>🤖 <b>컴퓨터</b> <span id="cGo"></span></span><span class="backs" id="cHand"></span><span class="sc" id="cScore">0점</span></div>
+    <div class="cap" id="cCap"></div>
+  </div>
+  <div class="floorWrap">
+    <div class="floor" id="floor"></div>
+    <div class="deck"><img src="assets/img/hwatu/back.png" alt="더미"><b id="deckCnt">0장</b></div>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="zone">
+    <div class="who"><span>🙂 <b>나</b> <span id="pGo"></span></span><span id="total" style="font-size:14px"></span><span class="sc" id="pScore">0점</span></div>
+    <div class="cap" id="pCap"></div>
+  </div>
+  <div class="hand" id="hand"></div>
+  <div class="tip">패를 한 번 누르면 들리고, 한 번 더 누르면 냅니다. 초록 줄은 바닥에 같은 달이 있는 패예요.</div>
+</main>
+
+<!-- 바닥 두 장 중 고르기 -->
+<div class="modal" id="pickModal" hidden><div class="box2"><h3>어느 패를 가져갈까요?</h3><p>같은 달이 두 장 있어요</p><div class="opts" id="pickOpts"></div></div></div>
+<!-- 고 / 스톱 -->
+<div class="modal" id="goModal" hidden><div class="box2"><h3 id="goTitle"></h3><p id="goText"></p><div class="btns"><button class="big" id="goBtn">고!</button><button class="ghost" id="stopBtn">스톱</button></div></div></div>
+<!-- 판 결과 -->
+<div class="modal" id="endModal" hidden><div class="box2"><h3 id="endTitle"></h3><div id="endBody"></div><div class="btns"><button class="big" id="nextBtn">다음 판</button><a class="ghost" href="hwatu.html">그만하기</a></div></div></div>
+
+<!-- 환영 장면 -->
+<div class="layer intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<!-- 시작 화면 -->
+<div class="layer" id="start" hidden>
+  <h2>🎴 맞고 한 판</h2>
+  <div class="howto">
+    <p>① 손패 한 장을 내고, 더미에서 한 장을 뒤집어요.<br>
+       ② 바닥에 같은 달 패가 있으면 가져옵니다.<br>
+       ③ <b>7점</b>이 나면 <b>고</b>(계속) 또는 <b>스톱</b>(끝내기)!<br>
+       ④ 뻑·쪽·따닥·싹쓸이·보너스 패도 있어요.<br>
+       &nbsp;&nbsp;&nbsp;&nbsp;돈 없이 점수만 쌓는 놀이입니다.</p>
+  </div>
+  <div class="opts2">
+    <div class="seg" id="lvSeg"><button data-lv="1">컴퓨터 쉬움</button><button data-lv="2">컴퓨터 보통</button></div>
+    <label class="chk"><input type="checkbox" id="gukjin"> 9월 국진(술잔)을 쌍피로도 쓰기</label>
+  </div>
+  <button class="big" id="startBtn">패 돌리기</button>
+  <p class="record" id="record"></p>
+</div>
+
+<script src="assets/js/hwatu.js"></script>
+<script>
+/* ===== 설정 (주인님이 고치기 쉬운 곳) ===== */
+const GO_AT = 7;            // 이 점수부터 고/스톱
+const PIBAK_MAX = 6;        // 진 쪽 피가 이 장 수 이하면 피박
+const BONUS = [             // 보너스 패: [그림, 피 값]
+  ['bonus-2', 2], ['bonus-2', 2], ['bonus-3', 3],
+];
+const SPEED = 650;          // 컴퓨터 움직임 빠르기 (밀리초)
+
+/* ===== 저장 ===== */
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let lv = Number(load('gukdanbi-gostop-level', 1)) === 2 ? 2 : 1;
+let gukjinOpt = load('gukdanbi-gostop-gukjin', 'on') === 'on';
+let totals = JSON.parse(load('gukdanbi-gostop-total', '{"p":0,"c":0,"w":0,"l":0}'));
+
+/* ===== 효과음 ===== */
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('tak'); };
+const SOUNDS = {
+  tak:  [[220, .05, 'square'], [440, .04]],
+  take: [[523, .06], [784, .1]],
+  special: [[784, .08], [988, .08], [1175, .14]],
+  go:   [[523, .1], [659, .1], [784, .1], [1047, .2]],
+  bad:  [[262, .15, 'triangle'], [196, .25, 'triangle']],
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.16, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 패 ===== */
+const GODORI = ['02-1', '04-1', '08-2'];
+const DAN = { 홍단: ['01-2', '02-2', '03-2'], 청단: ['06-2', '09-2', '10-2'], 초단: ['04-2', '05-2', '07-2'] };
+const GUKJIN = '09-1', BIGWANG = '12-1';
+function makeDeck() {
+  const d = HWATU.map((c, i) => ({ id: i, file: c.file, month: c.month, kind: c.kind === '쌍피' ? '피' : c.kind, pv: c.kind === '쌍피' ? 2 : c.kind === '피' ? 1 : 0 }));
+  BONUS.forEach(([file, pv], k) => d.push({ id: 100 + k, file, month: 0, kind: '피', pv, bonus: true }));
+  return d;
+}
+const src = c => HWATU_DIR + c.file + '.png';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const NAME = ['나', '컴퓨터'];
+
+/* ===== 점수 계산 ===== */
+function scoreOf(cap, asPi) {
+  const has = f => cap.some(c => c.file === f);
+  const gw = cap.filter(c => c.kind === '광');
+  const yeol = cap.filter(c => c.kind === '열끗' && !(asPi && c.file === GUKJIN));
+  const tti = cap.filter(c => c.kind === '띠');
+  let pi = cap.filter(c => c.kind === '피').reduce((s, c) => s + c.pv, 0) + (asPi && has(GUKJIN) ? 2 : 0);
+  const parts = []; let t = 0;
+  if (gw.length >= 3) { const v = gw.length === 5 ? 15 : gw.length === 4 ? 4 : (gw.some(c => c.file === BIGWANG) ? 2 : 3); parts.push([`광 ${gw.length}장${gw.length === 3 && v === 2 ? '(비광)' : ''}`, v]); t += v; }
+  if (yeol.length >= 5) { parts.push([`열끗 ${yeol.length}장`, yeol.length - 4]); t += yeol.length - 4; }
+  if (GODORI.every(has)) { parts.push(['고도리', 5]); t += 5; }
+  if (tti.length >= 5) { parts.push([`띠 ${tti.length}장`, tti.length - 4]); t += tti.length - 4; }
+  for (const [n, fs] of Object.entries(DAN)) if (fs.every(has)) { parts.push([n, 3]); t += 3; }
+  if (pi >= 10) { parts.push([`피 ${pi}장`, pi - 9]); t += pi - 9; }
+  return { t, parts, pi, gw: gw.length };
+}
+function score(p) {
+  const cap = S.cap[p];
+  const a = scoreOf(cap, false);
+  if (!gukjinOpt || !cap.some(c => c.file === GUKJIN)) return a;
+  const b = scoreOf(cap, true);
+  return b.t > a.t ? b : a;
+}
+
+/* ===== 게임 상태 ===== */
+let S = null, sel = -1, busy = false, first = 0;
+const $ = id => document.getElementById(id);
+
+function newRound() {
+  $('start').hidden = true; $('endModal').hidden = true;
+  let deck;
+  // 바닥에 같은 달 4장이 깔리면 다시 섞음
+  do {
+    deck = shuffle(makeDeck());
+    S = { deck, hand: [[], []], floor: [], cap: [[], []], go: [0, 0], goScore: [0, 0], shake: 0, turn: first, over: false };
+    for (let i = 0; i < 10; i++) { S.hand[0].push(S.deck.pop()); S.hand[1].push(S.deck.pop()); }
+    for (let i = 0; i < 8; i++) S.floor.push(S.deck.pop());
+  } while (Object.values(groupBy(S.floor.filter(c => !c.bonus))).some(g => g.length === 4));
+  // 바닥에 깔린 보너스 패는 선이 가져가고 한 장 채움
+  while (S.floor.some(c => c.bonus)) {
+    const b = S.floor.find(c => c.bonus);
+    S.floor.splice(S.floor.indexOf(b), 1); S.cap[first].push(b); S.floor.push(S.deck.pop());
+  }
+  sortHand(0);
+  render();
+  say(first === 0 ? '내 차례입니다. 낼 패를 고르세요' : '컴퓨터부터 시작합니다');
+  busy = false;
+  if (first === 1) setTimeout(() => cpuTurn(), SPEED);
+}
+function groupBy(cards) { const g = {}; cards.forEach(c => (g[c.month] = g[c.month] || []).push(c)); return g; }
+function sortHand(p) { S.hand[p].sort((a, b) => (a.month || 13) - (b.month || 13) || a.id - b.id); }
+function say(t) { $('msg').textContent = t; }
+
+/* ===== 그리기 ===== */
+function render() {
+  // 바닥: 달별로 묶어 쌓기
+  const g = groupBy(S.floor);
+  const months = Object.keys(g).map(Number).sort((a, b) => a - b);
+  const selMonth = sel >= 0 ? S.hand[0][sel].month : -1;
+  $('floor').innerHTML = months.map(m => `<div class="fs${m === selMonth ? ' hot' : ''}">` + g[m].map((c, k) => `<img src="${src(c)}" style="left:${k * 14}px" alt="">`).join('') + '</div>').join('');
+  $('deckCnt').textContent = S.deck.length + '장';
+  // 컴퓨터 손패(뒷면)
+  $('cHand').innerHTML = S.hand[1].map(() => '<img src="assets/img/hwatu/back.png" alt="">').join('');
+  // 먹은 패
+  $('pCap').innerHTML = capHTML(0); $('cCap').innerHTML = capHTML(1);
+  $('pScore').textContent = score(0).t + '점'; $('cScore').textContent = score(1).t + '점';
+  $('pGo').innerHTML = S.go[0] ? `<span class="go">${S.go[0]}고</span>` : '';
+  $('cGo').innerHTML = S.go[1] ? `<span class="go">${S.go[1]}고</span>` : '';
+  $('total').textContent = `누적 ${totals.p} : ${totals.c}`;
+  // 내 손패
+  const fm = new Set(S.floor.map(c => c.month));
+  $('hand').innerHTML = S.hand[0].map((c, i) => `<div class="hc${i === sel ? ' up' : ''}${!c.bonus && fm.has(c.month) ? ' match' : ''}${busy || S.turn !== 0 ? ' off' : ''}" data-i="${i}"><img src="${src(c)}" alt=""></div>`).join('');
+  [...$('hand').children].forEach(el => el.onclick = () => tapHand(Number(el.dataset.i)));
+}
+function capHTML(p) {
+  const cap = S.cap[p], out = [];
+  const grp = (name, cs, n) => cs.length ? `<span class="grp">${cs.map(c => `<img src="${src(c)}" alt="">`).join('')}<em>${name} ${n}</em></span>` : '';
+  out.push(grp('광', cap.filter(c => c.kind === '광'), cap.filter(c => c.kind === '광').length));
+  out.push(grp('열끗', cap.filter(c => c.kind === '열끗'), cap.filter(c => c.kind === '열끗').length));
+  out.push(grp('띠', cap.filter(c => c.kind === '띠'), cap.filter(c => c.kind === '띠').length));
+  const pis = cap.filter(c => c.kind === '피');
+  out.push(grp('피', pis, pis.reduce((s, c) => s + c.pv, 0)));
+  return out.join('') || '<span style="font-size:13px;color:#e6dcd4">아직 먹은 패가 없어요</span>';
+}
+
+/* ===== 내 차례 ===== */
+function tapHand(i) {
+  if (busy || S.over || S.turn !== 0) return;
+  if (sel !== i) { sel = i; beep('tak'); render(); const c = S.hand[0][i]; say(c.bonus ? '보너스 패예요. 한 번 더 누르면 내고 한 장 더 받아요' : '한 번 더 누르면 냅니다'); return; }
+  const card = S.hand[0].splice(i, 1)[0]; sel = -1;
+  play(0, card);
+}
+
+/* ===== 한 수 두기 (사람·컴퓨터 공통) ===== */
+async function play(p, card) {
+  busy = true; render();
+  const opp = 1 - p, who = NAME[p];
+  if (card.bonus) {                                       // 보너스 패: 바로 먹고 더미에서 한 장 받아 다시 냄
+    S.cap[p].push(card); beep('special');
+    say(`${who}: 보너스 피! 한 장 더 받아요`);
+    if (S.deck.length) { S.hand[p].push(S.deck.pop()); if (p === 0) sortHand(0); }
+    render(); await sleep(SPEED);
+    if (!S.hand[p].length) {                              // 낼 패가 없으면 차례 넘김
+      if (!S.hand[0].length && !S.hand[1].length) return endRound(-1);
+      S.turn = 1 - p; busy = false; render();
+      if (p === 0) setTimeout(cpuTurn, SPEED * 0.6); else say('내 차례입니다. 낼 패를 고르세요');
+      return;
+    }
+    busy = false;
+    if (p === 0) { say('한 장 더 내세요'); render(); }
+    else cpuTurn();
+    return;
+  }
+  // 1) 낸 패
+  const m = card.month, same = S.floor.filter(c => c.month === m);
+  let pend = null, placed = false, took2 = null;
+  S.floor.push(card); render(); beep('tak'); await sleep(SPEED * 0.6);
+  if (same.length === 1) pend = [card, same[0]];
+  else if (same.length === 2) { took2 = same; const pick = await choose(p, same); pend = [card, pick]; }
+  else if (same.length === 3) { pend = [card, ...same]; }
+  else placed = true;
+  // 2) 더미 뒤집기
+  let flip = S.deck.pop();
+  while (flip && flip.bonus) { S.cap[p].push(flip); beep('special'); say(`${who}: 뒤집었더니 보너스 피!`); render(); await sleep(SPEED); flip = S.deck.pop(); }
+  const takes = [], notes = [];
+  let steal = 0;
+  if (flip) {
+    S.floor.push(flip); render(); await sleep(SPEED * 0.7);
+    if (flip.month === m) {
+      if (same.length === 1) { notes.push('뻑!'); pend = null; beep('bad'); }                  // 세 장이 바닥에 남음
+      else if (same.length === 0) { takes.push(card, flip); notes.push('쪽!'); steal++; }       // 낸 패 + 뒤집은 패
+      else if (same.length === 2) { takes.push(card, ...same, flip); notes.push('따닥!'); steal++; pend = null; }
+      else { takes.push(...pend, flip); pend = null; }
+      if (same.length === 3) { notes.push('뻑 먹기!'); steal++; }
+    } else {
+      const fs = S.floor.filter(c => c.month === flip.month && c !== flip);
+      if (fs.length === 1) takes.push(flip, fs[0]);
+      else if (fs.length === 2) { const pick = await choose(p, fs); takes.push(flip, pick); }
+      else if (fs.length === 3) { takes.push(flip, ...fs); notes.push('뻑 먹기!'); steal++; }
+    }
+  }
+  if (pend) { takes.push(...pend); if (same.length === 3) { notes.push('뻑 먹기!'); steal++; } }
+  // 3) 가져오기
+  const uniq = [...new Set(takes)];
+  uniq.forEach(c => { S.floor.splice(S.floor.indexOf(c), 1); S.cap[p].push(c); });
+  if (uniq.length && !S.floor.length && (S.deck.length || S.hand[opp].length)) { notes.push('싹쓸이!'); steal++; }
+  for (let k = 0; k < steal; k++) stealPi(p);
+  if (notes.length) { say(`${who}: ${notes.join(' ')}${steal ? ' 상대 피 ' + steal + '장 가져옴' : ''}`); beep(notes.includes('뻑!') ? 'bad' : 'special'); }
+  else if (uniq.length) { say(`${who}: ${uniq.length}장 가져옴`); beep('take'); }
+  else say(`${who}: 가져온 패 없음`);
+  render(); await sleep(SPEED);
+  // 4) 고 / 스톱
+  const sc = score(p).t;
+  const handsEmpty = !S.hand[0].length && !S.hand[1].length;
+  if (sc >= GO_AT && sc > S.goScore[p]) {
+    const goOn = handsEmpty ? false : await decideGo(p, sc);
+    if (!goOn) return endRound(p);
+    S.go[p]++; S.goScore[p] = sc; beep('go');
+    say(`${who}: ${S.go[p]}고!`); render(); await sleep(SPEED);
+  }
+  if (handsEmpty) return endRound(-1);
+  S.turn = opp; busy = false; render();
+  if (opp === 1) setTimeout(cpuTurn, SPEED * 0.6); else say('내 차례입니다. 낼 패를 고르세요');
+}
+function stealPi(p) {
+  const opp = 1 - p, cap = S.cap[opp];
+  const one = cap.find(c => c.kind === '피' && c.pv === 1) || cap.find(c => c.kind === '피');
+  if (one) { cap.splice(cap.indexOf(one), 1); S.cap[p].push(one); }
+}
+/* 바닥 두 장 중 고르기 */
+function choose(p, two) {
+  if (p === 1) return Promise.resolve(value(two[0]) >= value(two[1]) ? two[0] : two[1]);
+  return new Promise(res => {
+    $('pickOpts').innerHTML = two.map((c, k) => `<img src="${src(c)}" data-k="${k}" alt="">`).join('');
+    $('pickModal').hidden = false;
+    [...$('pickOpts').children].forEach(el => el.onclick = () => { $('pickModal').hidden = true; res(two[Number(el.dataset.k)]); });
+  });
+}
+function value(c) {
+  if (c.kind === '광') return 6;
+  if (GODORI.includes(c.file)) return 5;
+  if (c.kind === '열끗') return 4;
+  if (Object.values(DAN).some(fs => fs.includes(c.file))) return 4;
+  if (c.kind === '띠') return 3;
+  return c.pv || 1;
+}
+/* 고 / 스톱 */
+function decideGo(p, sc) {
+  if (p === 1) {
+    const mine = sc, his = score(0).t, left = S.hand[1].length;
+    let go;
+    if (lv === 1) go = S.go[1] < 1 && left > 3 && Math.random() < .5;
+    else go = left > 3 && his < 4 && S.go[1] < 2 && mine < 12;
+    return Promise.resolve(go);
+  }
+  return new Promise(res => {
+    $('goTitle').textContent = `${sc}점 났습니다!`;
+    $('goText').innerHTML = `<b>고</b>를 하면 계속 쳐서 점수를 더 냅니다(고 한 번에 +1점, 3고부터 두 배).<br>대신 컴퓨터가 먼저 나면 <b>고박</b>으로 두 배를 잃어요.<br><b>스톱</b>하면 지금 점수로 이깁니다.`;
+    $('goModal').hidden = false;
+    $('goBtn').onclick = () => { $('goModal').hidden = true; res(true); };
+    $('stopBtn').onclick = () => { $('goModal').hidden = true; res(false); };
+  });
+}
+
+/* ===== 컴퓨터 차례 ===== */
+function cpuTurn() {
+  if (S.over) return;
+  const hand = S.hand[1];
+  if (!hand.length) return;
+  const fm = S.floor;
+  let pick;
+  const bonus = hand.find(c => c.bonus);
+  if (bonus) pick = bonus;
+  else if (lv === 1) {
+    const m = hand.filter(c => fm.some(f => f.month === c.month));
+    const pool = m.length && Math.random() < .8 ? m : hand;
+    pick = pool[Math.floor(Math.random() * pool.length)];
+  } else {
+    let best = -Infinity;
+    hand.forEach(c => {
+      const same = fm.filter(f => f.month === c.month);
+      let v = 0;
+      if (same.length === 1) v = value(c) + value(same[0]) + 3;
+      else if (same.length === 2) v = value(c) + Math.max(value(same[0]), value(same[1])) + 3;
+      else if (same.length === 3) v = 20;
+      else v = -value(c) + (hand.filter(h => h.month === c.month).length >= 2 ? 2 : 0);   // 버릴 때는 값싼 패부터
+      if (v > best) { best = v; pick = c; }
+    });
+  }
+  hand.splice(hand.indexOf(pick), 1);
+  say('컴퓨터 차례…');
+  play(1, pick);
+}
+
+/* ===== 판 끝 ===== */
+function endRound(w) {
+  S.over = true; busy = true; render();
+  let html = '', title;
+  if (w < 0) {
+    title = '나가리 (무승부)';
+    html = '<p>둘 다 점수를 내지 못하고 패가 다 떨어졌어요.</p>';
+  } else {
+    const l = 1 - w, sw = score(w), sl = score(l);
+    let base = sw.t + S.go[w];
+    const rows = sw.parts.map(([n, v]) => `<tr><td>${n}</td><td>${v}점</td></tr>`);
+    if (S.go[w]) rows.push(`<tr><td>${S.go[w]}고</td><td>+${S.go[w]}점</td></tr>`);
+    let mul = 1;
+    if (S.go[w] >= 3) { const x = 2 ** (S.go[w] - 2); mul *= x; rows.push(`<tr><td>${S.go[w]}고 곱하기</td><td>×${x}</td></tr>`); }
+    if (sw.pi >= 10 && sl.pi <= PIBAK_MAX) { mul *= 2; rows.push(`<tr><td>피박 (상대 피 ${sl.pi}장)</td><td>×2</td></tr>`); }
+    if (sw.gw >= 3 && sl.gw === 0) { mul *= 2; rows.push(`<tr><td>광박 (상대 광 없음)</td><td>×2</td></tr>`); }
+    if (S.go[l]) { mul *= 2; rows.push(`<tr><td>고박 (상대가 고 했다 짐)</td><td>×2</td></tr>`); }
+    const total = base * mul;
+    rows.push(`<tr><td><b>합계</b></td><td>${total}점</td></tr>`);
+    html = `<table class="tbl">${rows.join('')}</table>`;
+    if (w === 0) { totals.p += total; totals.w++; title = `🎉 이겼습니다! ${total}점`; beep('go'); }
+    else { totals.c += total; totals.l++; title = `😅 컴퓨터가 났습니다. ${total}점`; beep('bad'); }
+    save('gukdanbi-gostop-total', JSON.stringify(totals));
+  }
+  html += `<p style="font-size:15px">누적 점수 — 나 ${totals.p} : 컴퓨터 ${totals.c} (${totals.w}승 ${totals.l}패)</p>`;
+  $('endTitle').textContent = title; $('endBody').innerHTML = html;
+  first = w < 0 ? first : w;                  // 이긴 사람이 다음 판 선
+  setTimeout(() => $('endModal').hidden = false, 700);
+}
+$('nextBtn').onclick = newRound;
+
+/* ===== 시작 화면 ===== */
+function showStart() {
+  document.querySelectorAll('#lvSeg button').forEach(b => b.classList.toggle('on', Number(b.dataset.lv) === lv));
+  $('gukjin').checked = gukjinOpt;
+  $('record').textContent = totals.w + totals.l ? `지금까지 ${totals.w}승 ${totals.l}패 · 누적 ${totals.p} : ${totals.c}` : '돈 없이 점수만 쌓는 놀이입니다';
+  $('start').hidden = false;
+}
+document.querySelectorAll('#lvSeg button').forEach(b => b.onclick = () => { lv = Number(b.dataset.lv); save('gukdanbi-gostop-level', lv); showStart(); });
+$('gukjin').onchange = e => { gukjinOpt = e.target.checked; save('gukdanbi-gostop-gukjin', gukjinOpt ? 'on' : 'off'); };
+$('startBtn').onclick = newRound;
+
+/* ===== 환영 장면 ===== */
+const intro = $('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true; intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; showStart(); }, 450);
+}
+intro.onclick = endIntro;
+setTimeout(endIntro, 3500);
+if (location.hash === '#go') { introDone = true; intro.hidden = true; showStart(); }
+</script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
