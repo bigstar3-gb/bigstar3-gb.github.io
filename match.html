@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 꽃 짝 맞추기</title>
+  <meta name="description" content="국단비 놀이터 — 뒤집힌 카드에서 같은 꽃을 찾는 기억력 게임">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3d2a23">
+  <link rel="apple-touch-icon" href="assets/img/app/apple-touch-icon.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --green:#3f9b5a; --purple:#c9a4ff; --cream:#fffaf3;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      -webkit-user-select:none;user-select:none;touch-action:manipulation;overflow:hidden}
+    a{color:inherit;text-decoration:none}
+    button{font-family:var(--font);cursor:pointer}
+
+    /* 상단 띠 */
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line)}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;font-size:20px}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{flex:1;min-height:0;width:100%;max-width:720px;display:flex;flex-direction:column;padding:12px 4vw 14px;gap:12px}
+
+    /* 위 정보 줄 */
+    .info{display:flex;gap:10px;flex:none}
+    .info .box{flex:1;background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center}
+    .info .label{font-size:13px;color:var(--muted)}
+    .info .val{font-size:22px;font-weight:800;line-height:1.3}
+    .info .val small{font-size:15px;color:var(--muted);font-weight:600}
+    .msg{flex:none;height:28px;text-align:center;font-size:19px;font-weight:800;color:var(--accent)}
+
+    /* 카드 판 */
+    .board-wrap{flex:1;min-height:0;display:flex;align-items:flex-start;justify-content:center}
+    .board{display:grid;gap:8px}
+    .card{position:relative;aspect-ratio:1/1;perspective:800px;cursor:pointer;border:none;background:none;padding:0}
+    .card .in{position:absolute;inset:0;transition:transform .45s ease;transform-style:preserve-3d}
+    .card.up .in{transform:rotateY(180deg)}
+    .card .face{position:absolute;inset:0;border-radius:12px;overflow:hidden;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+    .card .back{background:var(--cream);border:2px solid var(--red);display:flex;align-items:center;justify-content:center}
+    .card .back img{width:46%;height:auto;opacity:.9}
+    .card .front{transform:rotateY(180deg);background:#1a1411;border:2px solid var(--accent)}
+    .card .front img{width:100%;height:100%;object-fit:cover;display:block}
+    .card .name{position:absolute;left:0;right:0;bottom:0;padding:14px 4px 5px;background:linear-gradient(transparent,rgba(0,0,0,.8));
+      font-size:clamp(13px,3.4vw,17px);font-weight:800;text-align:center;word-break:keep-all;line-height:1.2;opacity:0;transition:opacity .3s}
+    .card.got .front{border-color:var(--green);box-shadow:0 0 0 2px var(--green)}
+    .card.got .name{opacity:1}
+    .card.got{animation:got .5s ease}
+    .card.miss .front{border-color:var(--red)}
+    @keyframes got{50%{transform:scale(1.08)}}
+
+    /* 덮개 공통 (환영·시작·멈춤·완성) */
+    .layer{position:fixed;inset:56px 0 0 0;z-index:5;background:var(--wood);display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:20px 5vw;gap:14px;overflow-y:auto}
+    .layer[hidden]{display:none}
+    .layer h2{font-size:clamp(24px,6vw,32px);color:var(--accent)}
+    .layer p{font-size:18px;color:var(--muted);line-height:1.7;word-break:keep-all}
+    .big{padding:16px 40px;border-radius:40px;border:none;background:var(--red);color:#fff;font-size:21px;font-weight:800}
+    .ghost{padding:12px 28px;border-radius:40px;border:1.5px solid #fff;background:none;color:#fff;font-size:17px;font-weight:700}
+
+    /* 환영 장면 */
+    .intro{background:#1a1411;cursor:pointer}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;color:#fff;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    /* 시작 화면 */
+    .howto{background:var(--wood-dark);border:1px solid var(--line);border-radius:14px;padding:14px 18px;text-align:left;max-width:440px}
+    .howto p{font-size:17px}
+    .size{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+    .size button{padding:10px 16px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:17px;font-weight:700;line-height:1.3}
+    .size button small{display:block;font-size:13px;font-weight:600}
+    .size button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .peek{display:flex;align-items:center;gap:10px;font-size:17px;color:var(--muted);cursor:pointer}
+    .peek input{width:22px;height:22px;accent-color:var(--accent)}
+    .record{font-size:16px;color:var(--muted)}
+
+    /* 완성 화면 */
+    .done{justify-content:flex-start}
+    .prize{width:min(78vw,340px);border-radius:14px;overflow:hidden;border:2px solid var(--purple);background:var(--wood-dark);animation:pop .6s ease}
+    .prize img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+    .prize figcaption{font-size:18px;font-weight:800;padding:8px 6px;color:#fff}
+    .found{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px}
+    .found span{font-size:15px;padding:4px 10px;border-radius:20px;background:var(--wood-dark);border:1px solid var(--line);color:var(--muted)}
+    .done .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding-bottom:10px}
+    @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+    @media (max-width:640px){
+      .top h1 .long{display:none}
+      .info .val{font-size:19px}
+      .board{gap:6px}
+    }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1><img src="assets/img/etc/samgwang.png" alt="" style="height:26px;vertical-align:-6px"> <span class="long">국단비 놀이터 · </span>꽃 짝 맞추기</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <div class="info">
+    <div class="box"><div class="label">찾은 짝</div><div class="val" id="pairs">0<small>/6</small></div></div>
+    <div class="box"><div class="label">뒤집은 횟수</div><div class="val" id="moves">0</div></div>
+    <div class="box"><div class="label">시간</div><div class="val" id="time">0:00</div></div>
+  </div>
+  <div class="msg" id="msg"></div>
+  <div class="board-wrap" id="boardWrap"><div class="board" id="board"></div></div>
+</main>
+
+<!-- 환영 장면 -->
+<div class="layer intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<!-- 시작 화면 -->
+<div class="layer" id="start" hidden>
+  <h2><img src="assets/img/etc/samgwang.png" alt="" style="height:34px;vertical-align:-6px"> 꽃 짝 맞추기</h2>
+  <div class="howto">
+    <p>① 카드를 <b>두 장씩</b> 눌러 뒤집습니다.<br>
+       ② 같은 꽃이면 그대로 남고 이름이 나옵니다.<br>
+       ③ 다른 꽃이면 잠시 뒤 다시 덮입니다.<br>
+       ④ 모든 짝을 찾으면 꽃 선물을 드려요!</p>
+  </div>
+  <p>몇 쌍으로 할까요?</p>
+  <div class="size" id="size">
+    <button data-lv="0">쉬움<small>6쌍</small></button>
+    <button data-lv="1">보통<small>8쌍</small></button>
+    <button data-lv="2">어려움<small>10쌍</small></button>
+  </div>
+  <label class="peek"><input type="checkbox" id="peek"> 처음 3초 동안 카드 모두 보여 주기</label>
+  <button class="big" id="startBtn">시작하기</button>
+  <p class="record" id="record"></p>
+</div>
+
+<!-- 잠깐 멈춤 -->
+<div class="layer" id="paused" hidden>
+  <h2>⏸ 잠깐 멈춤</h2>
+  <p>화면을 누르면 계속합니다</p>
+</div>
+
+<!-- 완성 화면 -->
+<div class="layer done" id="done" hidden>
+  <h2>🎉 모두 찾으셨습니다!</h2>
+  <p id="doneText"></p>
+  <figure class="prize"><img id="prizeImg" alt=""><figcaption id="prizeName"></figcaption></figure>
+  <div class="found" id="found"></div>
+  <div class="btns">
+    <button class="big" id="againBtn">한 판 더</button>
+    <button class="ghost" id="levelBtn">단계 바꾸기</button>
+    <a class="ghost" href="index.html#playground">놀이터로</a>
+  </div>
+</div>
+
+<script src="assets/js/flowers.js"></script>
+<script>
+/* ===== 설정 (주인님이 고치기 쉬운 곳) ===== */
+const LEVELS = [                       // 단계: 이름, 가로 칸, 세로 칸 (가로×세로 = 카드 수, 짝수)
+  { name: '쉬움',   cols: 3, rows: 4 }, //  6쌍
+  { name: '보통',   cols: 4, rows: 4 }, //  8쌍
+  { name: '어려움', cols: 4, rows: 5 }, // 10쌍
+];
+const PEEK_MS = 3000;                  // 처음 보여 주는 시간 (3000 = 3초)
+const MISS_MS = 1000;                  // 틀렸을 때 다시 덮기까지 (1000 = 1초)
+const IMG_DIR = 'assets/img/flowers/';
+
+/* ===== 저장 (이 기기 브라우저에만) ===== */
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let lv = Math.min(LEVELS.length - 1, Number(load('gukdanbi-match-level', 0)) || 0);
+let peekOn = load('gukdanbi-match-peek', 'on') === 'on';
+let plays = Number(load('gukdanbi-match-plays', 0));
+function getBest(i) { try { return JSON.parse(load('gukdanbi-match-best-' + i, 'null')); } catch (e) { return null; } }
+
+/* ===== 효과음 (다른 게임과 같은 켜고 끄기) ===== */
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('flip'); };
+const SOUNDS = {
+  flip:  [[700, .04]],
+  right: [[523, .09], [659, .09], [784, .16]],                    // 도-미-솔
+  wrong: [[262, .15, 'triangle'], [220, .22, 'triangle']],
+  done:  [[523, .12], [659, .12], [784, .12], [1047, .35]],        // 도-미-솔-도
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 꽃 목록 정리: 이름별로 사진 묶기 (한 판에 같은 이름은 한 번만) ===== */
+const BY_NAME = {};
+FLOWERS.forEach(f => (BY_NAME[f.name] = BY_NAME[f.name] || []).push(f.file));
+const NAMES = Object.keys(BY_NAME);
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+
+/* ===== 화면 요소 ===== */
+const $ = id => document.getElementById(id);
+const board = $('board'), boardWrap = $('boardWrap'), msg = $('msg');
+
+/* ===== 게임 상태 ===== */
+let deck = [], open = [], found = 0, moves = 0, lock = true, playing = false;
+let elapsed = 0, startAt = 0, tick = null;
+const fmt = ms => { const s = Math.floor(ms / 1000); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+
+function now() { return elapsed + (startAt ? Date.now() - startAt : 0); }
+function runClock() { if (startAt || !playing) return; startAt = Date.now(); tick = setInterval(() => $('time').textContent = fmt(now()), 250); }
+function stopClock() { if (startAt) { elapsed += Date.now() - startAt; startAt = 0; } clearInterval(tick); }
+
+function updateInfo() {
+  $('pairs').innerHTML = `${found}<small>/${deck.length / 2}</small>`;
+  $('moves').textContent = moves;
+  $('time').textContent = fmt(now());
+}
+
+/* 판 크기를 화면에 맞춤 (세로 칸까지 모두 보이게) */
+function fitBoard() {
+  const L = LEVELS[lv], gap = parseFloat(getComputedStyle(board).gap) || 8;
+  const W = boardWrap.clientWidth, H = boardWrap.clientHeight;
+  const cell = Math.max(40, Math.min((W - gap * (L.cols - 1)) / L.cols, (H - gap * (L.rows - 1)) / L.rows, 160));
+  board.style.gridTemplateColumns = `repeat(${L.cols}, ${cell}px)`;
+}
+
+function loadImages(files) {
+  return Promise.all(files.map(f => new Promise(r => { const im = new Image(); im.onload = im.onerror = r; im.src = IMG_DIR + f; })));
+}
+
+async function newGame() {
+  const L = LEVELS[lv], n = L.cols * L.rows / 2;
+  $('start').hidden = true; $('done').hidden = true;
+  playing = false; lock = true; open = []; found = 0; moves = 0; elapsed = 0; startAt = 0; clearInterval(tick);
+  const chosen = shuffle(NAMES).slice(0, n).map(name => ({ name, file: pick(BY_NAME[name]) }));
+  deck = shuffle([...chosen, ...chosen]).map((f, i) => ({ ...f, id: i }));
+  board.innerHTML = ''; updateInfo();
+  msg.textContent = '꽃 사진 준비 중…';
+  await loadImages(chosen.map(c => c.file));
+
+  board.innerHTML = deck.map(c => `
+    <button class="card" data-i="${c.id}" aria-label="카드">
+      <span class="in">
+        <span class="face back"><img src="assets/img/etc/heart.png" alt=""></span>
+        <span class="face front"><img src="${IMG_DIR + c.file}" alt=""><span class="name">${c.name}</span></span>
+      </span>
+    </button>`).join('');
+  [...board.children].forEach(el => el.onclick = () => flip(el));
+  fitBoard();
+  playing = true;
+
+  if (peekOn) {
+    [...board.children].forEach(el => el.classList.add('up'));
+    let left = Math.round(PEEK_MS / 1000);
+    msg.textContent = `잘 보아 두세요 · ${left}`;
+    const cd = setInterval(() => {
+      left--;
+      if (left > 0) { msg.textContent = `잘 보아 두세요 · ${left}`; return; }
+      clearInterval(cd);
+      [...board.children].forEach(el => el.classList.remove('up'));
+      msg.textContent = '같은 꽃 두 장을 찾아 보세요';
+      lock = false;
+    }, 1000);
+  } else {
+    msg.textContent = '같은 꽃 두 장을 찾아 보세요';
+    lock = false;
+  }
+}
+
+function flip(el) {
+  if (lock || !playing || el.classList.contains('up')) return;
+  runClock();                                     // 첫 카드를 누르면 시간이 갑니다
+  el.classList.add('up'); beep('flip');
+  open.push(el);
+  if (open.length < 2) return;
+
+  moves++; lock = true;
+  const [a, b] = open, ca = deck[a.dataset.i], cb = deck[b.dataset.i];
+  if (ca.name === cb.name) {                      // 맞음
+    setTimeout(() => {
+      a.classList.add('got'); b.classList.add('got');
+      found++; open = []; lock = false;
+      msg.textContent = `딩동댕! 🌸 ${ca.name}`;
+      beep('right'); updateInfo();
+      if (found === deck.length / 2) finish(ca);
+    }, 350);
+  } else {                                        // 틀림
+    setTimeout(() => { a.classList.add('miss'); b.classList.add('miss'); beep('wrong'); }, 350);
+    setTimeout(() => {
+      a.classList.remove('up', 'miss'); b.classList.remove('up', 'miss');
+      open = []; lock = false;
+    }, 350 + MISS_MS);
+  }
+  updateInfo();
+}
+
+function finish(last) {
+  stopClock(); playing = false;
+  const t = elapsed, L = LEVELS[lv], prev = getBest(lv);
+  const better = !prev || moves < prev.moves || (moves === prev.moves && t < prev.time);
+  if (better) save('gukdanbi-match-best-' + lv, JSON.stringify({ moves, time: t }));
+  plays++; save('gukdanbi-match-plays', plays);
+
+  const names = [...new Set(deck.map(c => c.name))];
+  const gift = deck.find(c => c.name === pick(names));
+  $('doneText').innerHTML = `${L.name} · ${deck.length / 2}쌍을 <b>${moves}번</b> 만에, <b>${fmt(t)}</b> 걸려 찾으셨습니다.<br>`
+    + (better ? (prev ? '🏆 새 최고 기록입니다!' : '첫 기록이 저장되었습니다.') : `최고 기록 ${prev.moves}번 · ${fmt(prev.time)}`);
+  $('prizeImg').src = IMG_DIR + gift.file; $('prizeImg').alt = gift.name;
+  $('prizeName').textContent = '🎁 국단비님의 선물 · 🌸 ' + gift.name;
+  $('found').innerHTML = names.map(n => `<span>${n}</span>`).join('');
+  setTimeout(() => { $('done').hidden = false; $('done').scrollTop = 0; beep('done'); }, 700);
+}
+$('againBtn').onclick = newGame;
+$('levelBtn').onclick = () => { $('done').hidden = true; showStart(); };
+
+/* ===== 시작 화면 ===== */
+function showStart() {
+  document.querySelectorAll('#size button').forEach(b => b.classList.toggle('on', Number(b.dataset.lv) === lv));
+  $('peek').checked = peekOn;
+  const b = getBest(lv);
+  $('record').textContent = b ? `${LEVELS[lv].name} 최고 기록 · ${b.moves}번 · ${fmt(b.time)}` : `꽃 ${NAMES.length}가지가 기다리고 있어요`;
+  $('start').hidden = false;
+}
+document.querySelectorAll('#size button').forEach(b => b.onclick = () => {
+  lv = Number(b.dataset.lv); save('gukdanbi-match-level', lv); showStart();
+});
+$('peek').onchange = e => { peekOn = e.target.checked; save('gukdanbi-match-peek', peekOn ? 'on' : 'off'); };
+$('startBtn').onclick = newGame;
+
+/* ===== 다른 앱으로 넘어가면 자동 멈춤 ===== */
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && playing && startAt) { stopClock(); $('paused').hidden = false; }
+});
+$('paused').onclick = () => { $('paused').hidden = true; runClock(); };
+
+/* ===== 환영 장면 (약 3.5초, 누르면 바로 넘어감) ===== */
+const intro = $('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true; intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; showStart(); }, 450);
+}
+intro.onclick = endIntro;
+setTimeout(endIntro, 3500);
+
+/* ===== 키보드 (맥북): 엔터 = 시작/한 판 더 ===== */
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  if (!introDone) endIntro();
+  else if (!$('start').hidden) $('startBtn').click();
+  else if (!$('done').hidden) $('againBtn').click();
+  else if (!$('paused').hidden) $('paused').click();
+});
+
+window.addEventListener('resize', fitBoard);
+</script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

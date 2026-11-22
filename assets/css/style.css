@@ -180,4 +180,11 @@ html{scroll-snap-type:y proximity;scroll-padding-top:72px}
 .pc-text b{font-size:22px}
 .pc-text small{color:var(--muted);font-size:16px}
 .pc-go{padding:10px 22px;border-radius:30px;background:var(--red);font-weight:700;white-space:nowrap}
+/* 국단비 세 카드 (國·單·秘): 밝은 하늘색 + 한자 한 자 */
+.play-card.gdb{background:linear-gradient(90deg,#5ca0f1,#4a8fe3);border-color:#2a6fc4}
+.play-card.gdb .pc-icon{font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-weight:700;color:#fff;font-size:42px;width:52px;text-align:center;line-height:1}
+.play-card.gdb .pc-text small{color:#f2f7ff;font-weight:500}
+.play-card.gdb .pc-go{background:#0b3d91}
+.pc-text b{word-break:keep-all}
+.pc-icon.han{font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-weight:700;color:#fff;font-size:42px;width:52px;text-align:center;line-height:1}
 @media (max-width:640px){ .play-card{flex-wrap:wrap} .pc-go{width:100%;text-align:center} }
