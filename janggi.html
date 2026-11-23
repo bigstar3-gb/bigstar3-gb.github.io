@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 장기</title>
+  <meta name="description" content="국단비 놀이터 — 컴퓨터와 두는 장기 (쉬움·보통·어려움, 상차림·빅장, 말 가는 길 표시, 💡 도움 수)">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3d2a23">
+  <link rel="apple-touch-icon" href="assets/img/app/apple-touch-icon.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --purple:#c9a4ff;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      overflow:hidden;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+    a{color:inherit;text-decoration:none}
+    button{font-family:var(--font);cursor:pointer}
+
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line)}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;font-size:20px}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{flex:1;min-height:0;width:100%;max-width:680px;display:flex;flex-direction:column;gap:8px;padding:10px 3vw 10px}
+    .info{display:flex;gap:6px;flex:none}
+    .info .box{flex:1;background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:5px 8px;text-align:center}
+    .info .box.turn{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+    .info .label{font-size:13px;color:var(--muted)}
+    .info .val{font-size:19px;font-weight:800;line-height:1.35}
+
+    .board-wrap{flex:none;position:relative;display:flex;justify-content:center;align-items:flex-start}
+    canvas{display:block;border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.35);touch-action:manipulation;cursor:pointer}
+    .msg{flex:none;min-height:30px;text-align:center;font-size:18px;font-weight:700;color:var(--accent)}
+    .btns{flex:none;display:flex;gap:10px;padding-bottom:env(safe-area-inset-bottom)}
+    .btns button{flex:1;height:56px;border-radius:14px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;font-size:19px;font-weight:800}
+    .btns button:disabled{opacity:.4;cursor:default}
+    .btns .new{background:var(--red);border-color:var(--red)}
+
+    /* 덮개 */
+    .cover{position:fixed;inset:56px 0 0 0;z-index:4;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:14px;background:rgba(26,20,17,.92);text-align:center;padding:18px 5vw}
+    .cover[hidden],.cover [hidden]{display:none}
+    .cover.end{background:linear-gradient(rgba(26,20,17,.15) 0,rgba(26,20,17,.15) 35%,rgba(26,20,17,.95) 60%);justify-content:flex-end;padding-bottom:40px}
+    .cover h2{font-size:clamp(24px,6vw,32px);color:var(--accent)}
+    .cover p{font-size:17px;color:var(--muted);line-height:1.7;word-break:keep-all}
+    .cover .rules{background:var(--wood-dark);border:1px solid var(--line);border-radius:12px;padding:10px 16px;text-align:left}
+    .level{display:flex;gap:6px}
+    .level button{padding:10px 18px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:18px;font-weight:700}
+    .level button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .prize{background:var(--wood-dark);border:2px solid var(--purple);border-radius:12px;overflow:hidden;width:min(86vw,420px);flex:none}
+    .prize img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+    .prize.lose{border-color:var(--accent)} .prize.lose img{aspect-ratio:1/1;width:min(86vw,420px,48vh)}
+    .prize figcaption{padding:6px;font-size:18px;font-weight:800;color:var(--purple)}
+    .cover.win{background:rgba(26,20,17,.95);justify-content:center;padding-bottom:18px}
+    .cover .big{padding:15px 38px;border-radius:40px;border:none;background:var(--red);color:#fff;font-size:20px;font-weight:800}
+    .cover .ghost{padding:10px 24px;border-radius:30px;border:1.5px solid #fff;background:none;color:#fff;font-size:16px;font-weight:700}
+
+    /* 환영 장면 */
+    .intro{position:fixed;inset:56px 0 0 0;z-index:5;background:#1a1411;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;gap:12px;text-align:center;cursor:pointer}
+    .intro[hidden]{display:none}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    @media (max-width:640px){ .top h1 .long{display:none} .info .val{font-size:17px} .btns button{height:52px;font-size:18px} }
+  
+    /* ===== 장기 전용 ===== */
+    /* 초(楚) 말 행초서체: Zhi Mang Xing (SIL OFL 1.1) — 7글자만 떼어 넣음. 馬·車는 초서 모양인 马·车 글자를 씀 */
+    @font-face{font-family:'gukdanbi-cho';src:url(data:font/woff2;base64,d09GMgABAAAAAAMgAA4AAAAABcwAAALOAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcCgZgADQRCAqDBIJCATYCJAMICwYABCAFg14HIAwHG44EII7DOIZcojCZYnGPoFq2ntm9DySFIqso0TE5UFlhDCorLMpTSIRJFqFAItwd4WWTbCFsLeZK6i1O3Ixra9T51pATSdfACd7lawFmVD/5L/6NW+DB+dXbCp1Qp/ffup4qMGCCBGJ719UXmFRo/wOAAFBLUbRDQz6TgcDR2h9XtEMJgAYlezzo7NTOBg74ePt4I1pbD8ofUQYExD/5DphBIlEwColG0JkBajI4Of7/fwiW1yBAjutzOEGCisQ9XsCBkDe930Y9/DvlZgZUr/A3KfT1GZNiYqxNO/l7uhXnG8/gS673NcltXeDr7pbfdsWwu19o2O/qFdnuVdG+ayKDLI2+Jxx3zEpIKGy/7mFCEIrzV2Snexd7BYcuK+xeC7gu0Kt45gpfN0v37OT3sTZdN9k9ZPFN7/9mTb6XuNnbWN50uYJFcHOp4tyShoKzEJ2s20Hk/vNAdmfU0ysC3L/2J4fInmVWZ+KOFtrNIch2Q9Ro06Ytg9LyrzqEDclKMn7AMy9qWbkz/XTXYma1nArye7zEyE3DaWpZdxzsjORttBoZLvYqhVcff881JWWnHFyheSQgxnz8AO94zE4eexaOguVCgQ92hQ949O8fZI7txt+18LlwHmATAoBA2nhP/Hw7gtP0KxNCLwAf27/4AvCrOB0E5e0sokelQFeC4FulANztCASV00kpT3AXpfvk49MUBlwDQNcZJCoz8IrJhDHbmDTimymW3WOqxRBhGmNh+9iO2Qhng0JTIFOSBImyYdo0aTGE+UoUBwuWKImbKOkSBEo6rsc8ZaIkixPT72MlR7ZElExZMEWJsmWjyWJMg4YESUHrckRTF4OS5lhKoSRIFSceJV22LBoKqZE0JF9XepKJxcSyxFucBDlSRcmkTZ1mQb9iIlgQOzZMMKCWXpVmCIvnL67kVBJKOoy4CTIXUbF2KyyJv8X/mnW6FgA=) format('woff2');unicode-range:U+5352}
+    @font-face{font-family:'gukdanbi-cho';src:url(data:font/woff2;base64,d09GMgABAAAAAAPYAA4AAAAABqQAAAOFAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcCgZgADQRCAqEXINrATYCJAMICwYABCAFg14HIAwHGzcFUZQtSpzg52FszGo8Ug1WVmY7eqkhxP0vlg5XXtri4f9Pve8nm3O8JLVagTZt8VIReioyFviwguWH97SXcrCQJpO7ntAdhEn3B6AX20SsxK+IRogcUXTWELHeFoD/c02+aoF7//kF2ol8vehV6emA14AzraCBbFgCKcDzd35tP8/IZEliaaefe6oAWlJkICMXryBgkAA9CwAEAORZJdIHZJCOhDBAjPdLsQQt1AEobK12C9OJsyP803/pEcQ8VhtA9kVqARGA+BPeAwMEIAEZ0LGPzIJEDgw7CQL2UxbLgNEBAbiIt5oXIAHkhvse8AMQLppu5D+j6PPK88NA4+xkDCnNoWJ1nPiaKC67xtn5sFOYRhNCzc4sitcJD9MWydFOUZwBy3CIowP7aWuqOF35NEMIdVs2QhlS6LWa7UH6UYyb3VkWM28/H3yTk1NsSGnOCXU6xQxhujA7jILmUBUMEx29zNnpuXReBJuclBwd4ehY9ltc7jgiiuOi9DUEtz2/JomPSEz4eCeDBxMRbKHm0Y5evQh2lP8Ams+RekwIfQDLIgu4Kj00FKlfQF7Ud9Rx8hgaC51m9zwuwF3CIzbTaSpSQZQh+Ts6qVnbkOyEqb5Gd1oooaMBTCEu+Zq68bDtD6IpKTe5uY292Xm+cjItv4KDNKyX+JOpcba67xxkdgZIzmwC7Ag5oDCLT/u3ikxhWiIhiBRQJsVqaj15aVmPfqWG8kBF37uYAsWHj7nGwfS2VTHl4z112cTVeDkjPdiZGC5qaGDEo8wRKePlKjtOjHDiYK/nGJs8mSbc+4HM5uJfgOkr+XFyXKGvJSa45G1q2mHT0lTBhkZzblNxsxM3HlG4vKi/OWPbXjuJTlpaWr48HF7cQtwcABBAYj/cutEby2v1jSESXwIuS1+DIHzU5sJB6V/gAUQLABUCQIBfiCGewRxACTcFdNkB9LrJcsIqAhkUYAURpyoRcEjODuAELEBIYAIBjydAZGUXSDRCAsgkwuk6FCoRA6bJ7LFqVGo7YECPPjNyghyicCP04oYtMap8NLQY+FlNWoUsoWfvoBfVJqsNUEtGLJ5tdLp0pWqCiw4pSaLJ4KJGIO/vFUqT0W4jq6hXDMwdst+KATHgnEChcuglVhodeq1+xVKEL4vJoBlixqBVswDNl6K33zSYgPJRFOY44dSfBgP952A1HyN1AwAA) format('woff2');unicode-range:U+695A}
+    @font-face{font-family:'gukdanbi-cho';src:url(data:font/woff2;base64,d09GMgABAAAAAAO8AA4AAAAABowAAANrAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcCgZgADQRCAqERINNATYCJAMICwYABCAFg14HIAwHGxkFCI7DdNsjxwgjCSTDwQE/8fDP/v7b5977yTEixAYnhjSVSmA066wXB2IE09xhcGijqIv+x6masSwX4Nw/D3JEHmYNTBeWu8+7AWuUCRTs5lZgCnDNrXlU3CeGOGScMkb46akC5doiBTFugrI2gJdB/h8AEACyNCjSAQzJFsg5gKn2UizCGQwARUwttWjeXBkpMJ5s8RwJ5Z7HA5B+jZWAgPgG+YqOILnY1G6kG9SgdWSzyWCbxf//MHiVgwA7omY0kIDsZQv95wBYD8jKqlFL32Y+erQuemIX4vUenJx87Ox2EI60tQV/eF3+Ydedwzg5e2p3Zt8YfLigextxS75YiE2PT1PDwMDUBLF6byWmzxcw5Ofjl1eD8GXqS7uMu1uBDdCqsbw6uiamoi7cXO3l1ksYB9vYO7vvYRle3lATsDM4VMhWJGL2r8BrIixso8tjYuLv7xce5q/Oxq2FWF3E1DQmVLcHsZo6G7saN7cKL2+P6BniFu3snTgFSFv18i5CPOy5M4emJg9XpEGHdArBKCXBE/n2JoitdX2PsQwttj+hoTE6bG25XZ80kWroU9hYymnMdU9mfc7cC5T6T5OChedb0Vh7/NZUejW1Zbt0uwBbojOgnHo5apaBFSzM4vd/TuNTKhDRdy1qlnKcTEEsz9Mq/B8k6QFDtgxlt1cfXV0daP5GEVnOzirUs/TUOGf9ivQyXe3Ur7PSUxLy7a7QkKhRXimeGdCf9Gw1a25rPEl2TC4gtarfTVjpKjRVVoZD/oPOnmhjW3nkgHXU4ddptFbT9VenLvSGRxEYP/oJ9u20zQdltLBOhgIAgcTof69lRGZowr/hoaDu4VbfF20A+EJ/yAB45btQHVNZQIkEBP8MksL6AAidnQi6dB3w0hMFkDFxtvZgsRgAlJgHSmQIgCsAzCi01kuJancpNcwpZXoHIRVpHdL3KdY9TElx4y6AJwd27Hkjx4kdB37ktAPWxjb00KpUWHBlR58DgCp1ntw4smGVMJDgw1fZc+PJCzn6ZLDanRdBbNjYcRCrfFhiZcWNSwgPtrHjzIYtN668eWETWC+6iP4+w7dCcobkbKPJhh0fzix44sSK/ahfEWLIgAwpQm0PS8ayVfvImemyOdt1OGCLvHwdhSmUzizvAZxGr0HkMe3Q2wE=) format('woff2');unicode-range:U+8C61}
+    @font-face{font-family:'gukdanbi-cho';src:url(data:font/woff2;base64,d09GMgABAAAAAAPIAA4AAAAABrwAAAN3AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcCgZgADwRCAqEaINgATYCJAMKCwgABCAFg14HIAwHGzYFUZQuSoXsR0LmpvJWKcFkiskUh7+9G/Ef97577m9pjdKpAtcG1CngAQkFIRPAUsV+MGBvCE+7AUaKSUhfSCexeAEBOP830yYn0FZOKFwDe9nUAm4DZva5sTiwcQNoCvDpNsUOjyz2Rpd4SIh4dahgyDxRFIfHzt6AXhua/wCAAGi3ctOEhnoqf8DFfil3NKMAAB0gBjyPq0sbK7Dk//pcHFVSUwVA6y+FgED+Kd9hGSUKLcygEsygtgboaosK+///A8B+Jy8ErwQipsfG8Oge/iugD5C0AUUd5gFxvnaY5mlHXDup52cwZ+H522RJ2msI/xkCwE/ydRK7uenBfScQ6akNxZnLTLWHYmRemA+HSI8RtBFEtoPEC8vhmNb1/MhkvvPXFHv4XuNl8PNgSP4MgafdabJTZnxf4Cy4oDzkPjfGWLPhSJLtgLmRMV74khAOx1RL9vP/JfhusGU9RuBukyH61LrNkiXPwbwdBG8CLHjuPN8gWfQcLI3Idozw4XjaJ/3Iet32SBd3kby8QreAgNCg3/nLvH24A9hMzWV/VJpax5khxGUj53sgUs5Bxg72o0QSaCiHpZttLSS0TG3sWF2oJUhvv4V3sjTLCfd9knKYiNaxodgWtqa/98OdFxNlapdnPiRmvuXBHstjzhXk8YjbVgb8JXDI13Kzskxwf1Tz0uB61Ps4Xe76KF5XNlkasZz6765Kl+IpNKjwkSCvkYmmjnTEs/P0yFlwCY7IVFhzsFC+ImMEITTanC8chCqZaJWZU+R8Wq+Vt5Hykn9rxGHR84nL63HZaU6ALM33zMzMs4oWYp6KjqLsmc8YaGR4yFu908/UVkla3jQYBQCCsjeRo+kUxmb8lZ6K6gV8TX7xBoC+PBIAFDi0woqIngLh60QHkmlBAVKZU1qPFGShQMtDbH9ZRIt7ANBzhUraDIBnAC4dsyboMuaXbtl0j27biCDdMRvrZ+taSSgriZJkS4GFhpFGnCZ1GvSJ84YBERcIA8tFhARo/rASoIlzlyJRDEiUAlhIlwYj0eKnEicP05UmSSpDatSgYV1gukiqoiSKp5slSoQWB4KSKEGaVGpyMvF4PEtTqGKIiyEuWzxB0NLFiZBCkyr1Jr9iJFAAG1aMqEEllvV9k7i4vqCuCrZ0RTyxiBSHCoSacaAp/ULxv3yIuh4=) format('woff2');unicode-range:U+58EB,U+9A6C}
+    @font-face{font-family:'gukdanbi-cho';src:url(data:font/woff2;base64,d09GMgABAAAAAASQAA4AAAAAB5gAAAQ9AAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcCgZgADwRCAqGRIUAATYCJAMKCwgABCAFg14HIAwHG9YFUVRNihQ/C+yG6yIswiI6Ph+bcPiGSHljikuHBQReGAIDiksEkF1U9cxBcgRQ/0EEaIffX4J6E4/EP2hQFBpY19XW1paYGKLy7n9cvW0AknVuUL+077LS9mOEZ/4crCTEBUO70HZorm3xxU/ezNNHxEKC0EgqnvBKmkQiZHyea+ol3zvAZDqhDvoLi6JNi9aAMyoctk8nkMAykdk2KwVvC7fwReSQxn+ogFTy6JHfpFmtjiiTBBIJQACQJJ4WdiQlWhr1kKf1eSr0gwxj8kjqcCncT6+elRJx17l4e1hhLLGY+MswS54A4cfoexRQgJCxlwVBUL5ICTJZKYh6av8JdvP4v7HtExGEuJoe3UAyJCWAzws1AZRB+8XxkuQjJ6Srrmw47T4GMIr38B5b+3SYwPmls3hKcOhbhXMAuigtzNv2IHYBoJRwBvHLfhfL/uYm1rC0CHH9XLMwB+7rUlWuKduudnFFtbZxSQ4HcR7Tre8M/F1X+6jde0EMExsm1Rli3NFU1f2IvW59XSobQ4vdONt5LzuxmrRnnjd2RFaWfRhr/fQoukMM7TenlECpENM8REtahXZkR/L7RjZO+5aHNe5oygKOpSX59z/eQ/aQibHw9gJiq6OxbHxvlRzeLV9fVK6u+s66F1W0AODOvM1w5rRnS9OqMs1fCuplALwd+96mM6cEuBPZWcS0s2BWruOUx00+Xq8j6X2doj/ZuhK7w0+/LW3+z9/ULE1D51WjdZc/goKNqtG6huT3L9Ldfb9yysu8FN7cbS781TWR9nvvStTYMpNq0dP+VoXH6n2emJVGnDxSCkrBK/73E01efWHY0PBnX7lAMoc2k0r8987t6V43j1ct6b/W/qn5x3lj8gvSjKpW8pD8eqdsiBnn3iPViyBTiU9z24ulWNS18br715Jk3yeTbV+jiNMEoFeA76A6RfZfp7P9d+5WmxpePo60hgZTfTONPUDK6+hU2OqkdhT56Jx7j8sV0Cr3v94/tJyCFWtmTlad/7oHcuKiZPCdbbfS5Zi2ALMkn6d1mtRqyaQ79TqeND+j6tDOu5M6q5ayxmTDyxmqoQYz7C5p0vGHb0vEquu2z/Z3zrbxWr5Meejjj93bhapfICDSMPnSifYuEfk3bhx/CS8u/aqWxxcl9hvyzIrjEnGjPMlFVft/aBnCvEY+96IY4vkSbJsUWy0mwrh8SjCEIrlegpAkJaoXuShBLldKJJ3XSqyONyWJUqFDSSpXYN+eTLFgxQKJmZEQ4OOXAiDBIeCth5qfx0jj/gAJhygfvcACIC8DEkwGrjoY0go/KOwmAaO9h1JikohgYHwCuX1pTtNcIJEIEEiEMA/vYFRKEswsnY2wuWhsVAKQAByj5OGTFuaQgDQN/tK3kBgZcLCQ1oqphklJqwDKWp6ng8D8BcCeBa8o5GqJCyrpvxwSC04nWQEAAA==) format('woff2');unicode-range:U+5305,U+8F66}
+    .cover{justify-content:safe center}
+    .caps{flex:none;display:flex;justify-content:space-between;gap:8px;min-height:26px;font-size:13px;color:var(--muted)}
+    .caps div{display:flex;align-items:center;flex-wrap:wrap;gap:2px}
+    .caps .score{font-size:15px;color:var(--accent);margin:0 6px}
+    .pc{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;flex:none;background:#fbf3df;color:#1b6a3a;border:2px solid currentColor;
+      clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);font-family:"Noto Serif KR","Nanum Myeongjo","AppleMyungjo",serif;font-weight:700;font-size:22px}
+    .pc.pbig{width:46px;height:46px;font-size:26px} .pc.psmall{width:34px;height:34px;font-size:18px}
+    .pc.mini{width:26px;height:26px;font-size:15px;border-width:1.5px;vertical-align:-6px}
+    .pc.mini.sm{width:20px;height:20px;font-size:12px}
+    .pc.cho{color:#1b6a3a;font-family:'gukdanbi-cho',serif;font-weight:400;font-size:1.35em} .pc.han{color:#c8102e}
+    .info .val .pc.mini{margin-right:2px}
+    .btns{gap:7px} .btns .hint{border-color:var(--purple)}
+    .side{display:flex;gap:6px}
+    .side button{padding:8px 14px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:18px;font-weight:700;display:flex;align-items:center;gap:6px}
+    .side button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .opt{display:flex;flex-direction:column;align-items:center;gap:5px}
+    .opt[hidden]{display:none}
+    .opt>span{font-size:14px;color:var(--muted)}
+    .opt .level{flex-wrap:wrap;justify-content:center}
+    .opt .level button{padding:8px 12px;font-size:16px}
+    details.how{background:var(--wood-dark);border:1px solid var(--line);border-radius:12px;padding:8px 14px;text-align:left;width:min(92vw,460px)}
+    details.how summary{font-size:17px;font-weight:700;color:var(--accent);cursor:pointer}
+    details.how li{list-style:none;display:flex;align-items:center;gap:10px;padding:5px 0;font-size:16px;color:var(--muted);line-height:1.45;word-break:keep-all;border-top:1px dashed var(--line)}
+    details.how li:first-child{border-top:none}
+    details.how li b{color:#fff}
+    .credit{font-size:12px;color:rgba(230,220,212,.6);line-height:1.5}
+    .credit a{text-decoration:underline}
+    @media (max-width:640px){ .btns button{font-size:16px} }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1>將 <span class="long">국단비 놀이터 · </span>장기</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <div class="info">
+    <div class="box" id="meBox"><div class="label">나</div><div class="val" id="meLabel">楚 초</div></div>
+    <div class="box" id="cpuBox"><div class="label">컴퓨터</div><div class="val" id="cpuLabel">보통</div></div>
+    <div class="box"><div class="label">전적</div><div class="val" id="record">0승 0패</div></div>
+  </div>
+  <div class="caps"><div id="capMe"></div><div id="capCpu"></div></div>
+
+  <div class="board-wrap" id="wrap">
+    <canvas id="cv"></canvas>
+    <div class="cover" id="cover" hidden>
+      <h2 id="cTitle">將 장기</h2>
+      <div class="rules" id="rules"><p>· 상대 <b>궁</b>을 장군 불러 피할 곳이 없게 하면(<b>외통수</b>) 승리<br>· 내 말을 누르면 갈 수 있는 곳이 <b>점</b>으로 보여요<br>· <b>초(楚)</b>가 먼저 둡니다 · 💡 도움은 좋은 수를 알려 드려요<br>· 둘 수가 없을 때는 [한 수 쉬기]</p></div>
+      <details class="how" id="how">
+        <summary>말 이름과 가는 길 보기</summary>
+        <ul>
+          <li><span class="pc pbig cho">楚</span><span><b>궁(왕)</b> — 초는 행초서체, 한은 해서체로 써요. 궁성 안에서 선을 따라 한 칸. 이 말이 잡히게 되면 집니다</span></li>
+          <li><span class="pc cho">士</span><span><b>사</b> — 궁처럼 궁성 안에서 선을 따라 한 칸</span></li>
+          <li><span class="pc cho">车</span><span><b>차(車)</b> — 가로·세로로 여러 칸 (궁성 안에서는 대각선도). 가장 힘센 말</span></li>
+          <li><span class="pc cho">包</span><span><b>포</b> — 다른 말 하나를 <b>뛰어넘어야</b> 움직여요. 포끼리는 넘지도 잡지도 못해요</span></li>
+          <li><span class="pc cho">马</span><span><b>마(馬)</b> — 한 칸 곧게 + 한 칸 대각선 ('日'자). 가는 길이 막히면 못 가요</span></li>
+          <li><span class="pc cho">象</span><span><b>상</b> — 한 칸 곧게 + 두 칸 대각선 ('用'자). 가는 길이 막히면 못 가요</span></li>
+          <li><span class="pc psmall cho">卒</span><span><b>졸·병</b> — 앞이나 옆으로 한 칸. 뒤로는 못 가요</span></li>
+        </ul>
+      </details>
+      <p id="cText"></p>
+      <div class="side" id="sideSel">
+        <button data-c="w"><span class="pc mini cho">楚</span>초 (먼저)</button>
+        <button data-c="b"><span class="pc mini han">漢</span>한 (나중)</button>
+      </div>
+      <div class="opt"><span>상차림</span><div class="level" id="setupSel">
+        <button data-s="NBNB">마상마상</button><button data-s="BNBN">상마상마</button><button data-s="NBBN">마상상마</button><button data-s="BNNB">상마마상</button>
+      </div></div>
+      <div class="opt"><span>빅장</span><div class="level" id="bikSel"><button data-b="0">없음</button><button data-b="1">있음 (점수로 승부)</button></div></div>
+      <div class="level" id="level"><button data-l="0">쉬움</button><button data-l="1">보통</button><button data-l="2">어려움</button></div>
+      <figure class="prize" id="prize" hidden><img id="prizeImg" alt=""><figcaption id="prizeName"></figcaption></figure>
+      <button class="big" id="cBtn">시작하기</button>
+      <button class="ghost" id="cBtn3" hidden>↩ 무르고 이어 두기</button>
+      <button class="ghost" id="cBtn2" hidden>단계 바꾸기</button>
+      <p class="credit" id="credit">컴퓨터 두뇌·규칙 계산: <a href="https://github.com/fairy-stockfish/Fairy-Stockfish" target="_blank" rel="noopener">Fairy-Stockfish</a> (GPL-3.0) · 초 글씨: Zhi Mang Xing (OFL)</p>
+    </div>
+  </div>
+
+  <p class="msg" id="msg">장기판을 준비하고 있어요…</p>
+  <div class="btns">
+    <button id="undoBtn">↩ 무르기</button>
+    <button class="hint" id="hintBtn">💡 도움</button>
+    <button id="passBtn">한 수 쉬기</button>
+    <button class="new" id="newBtn">새 판</button>
+  </div>
+</main>
+
+<div class="intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<script src="assets/js/flowers.js"></script>
+<script>
+/* 홈페이지 주소에서 컴퓨터 두뇌(Fairy-Stockfish)를 켜려면 '격리 모드'가 필요 — 저장 담당(sw.js)이 켜 줌.
+   처음 한 번은 저장 담당이 자리 잡은 뒤 화면을 한 번 새로 고침 */
+(function () {
+  if (window.crossOriginIsolated || !('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+  navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(() => {
+    let done = null; try { done = sessionStorage.getItem('gukdanbi-janggi-coi'); } catch (e) {}
+    if (!done) { try { sessionStorage.setItem('gukdanbi-janggi-coi', '1'); } catch (e) {} location.reload(); }
+  }).catch(() => {});
+})();
+window.FFISH_READY = [];
+</script>
+<script src="assets/engine/ffish/ffish.js"></script>
+<script src="assets/engine/fairy/stockfish.js"></script>
+<script>
+/* ===== 고치기 쉬운 곳 =====
+   skill: 컴퓨터 실력(-20~20), movetime: 생각 시간(1000 = 1초)
+   depth: 두뇌가 꺼져 있을 때(맥북 파일로 열 때 등) 쓰는 간단한 계산의 수읽기 깊이 */
+const LEVELS = [
+  { skill: -12, movetime: 300, depth: 1 },   // 쉬움
+  { skill: -3,  movetime: 500, depth: 2 },   // 보통
+  { skill: 8,   movetime: 1200, depth: 3 },  // 어려움
+];
+const HINT = { skill: 20, movetime: 1000, depth: 3 };
+const LEVEL_NAMES = ['쉬움', '보통', '어려움'];
+const VALUE = { r: 13, c: 7, n: 5, b: 3, a: 3, p: 2, k: 0 };   // 장기 점수
+const DUM = 1.5;                                                 // 한(漢) 덤
+const NAMES = { k: '궁', a: '사', b: '상', n: '마', r: '차', c: '포', p: '졸' };
+const jong = w => { const c = w.charCodeAt(w.length - 1) - 0xAC00; return c >= 0 && c % 28 > 0; };
+const ig = w => w + (jong(w) ? '이' : '가'), eul = w => w + (jong(w) ? '을' : '를'), eun = w => w + (jong(w) ? '은' : '는');
+const nm = p => p.t === 'p' ? (p.c === 'w' ? '졸' : '병') : NAMES[p.t];
+const HAN_CH = { k: '漢', a: '士', b: '象', n: '馬', r: '車', c: '包', p: '兵' };
+const CHO_CH = { k: '楚', a: '士', b: '象', n: '马', r: '车', c: '包', p: '卒' };   // 행초서체 글꼴로 그림 (马·车 = 馬·車의 초서 모양)
+const WAYS = { k: '궁성 안에서 선을 따라 한 칸', a: '궁성 안에서 선을 따라 한 칸', r: '가로·세로 여러 칸', c: '다른 말 하나를 뛰어넘어 가요',
+  n: "한 칸 곧게 + 한 칸 대각선 ('日'자)", b: "한 칸 곧게 + 두 칸 대각선 ('用'자)", p: '앞이나 옆으로 한 칸' };
+const COLOR = { w: '#1b6a3a', b: '#c8102e' };                    // 초 = 초록, 한 = 빨강
+
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let level = Number(load('gukdanbi-janggi-level', 0)); if (!(level >= 0 && level <= 2)) level = 0;
+let myColor = load('gukdanbi-janggi-color', 'w') === 'b' ? 'b' : 'w';
+let mySetup = load('gukdanbi-janggi-setup', 'NBBN'); if (!['NBNB', 'BNBN', 'NBBN', 'BNNB'].includes(mySetup)) mySetup = 'NBBN';
+let bikjang = load('gukdanbi-janggi-bik', '0') === '1';
+let rec; try { rec = JSON.parse(load('gukdanbi-janggi-record', '[[0,0,0],[0,0,0],[0,0,0]]')); } catch (e) { rec = [[0,0,0],[0,0,0],[0,0,0]]; }
+const cpuColor = () => myColor === 'w' ? 'b' : 'w';
+const sideName = c => c === 'w' ? '초' : '한';
+
+/* ===== 효과음 ===== */
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('move'); };
+const SOUNDS = {
+  move:  [[170, .07, 'triangle']],
+  take:  [[130, .05, 'square'], [240, .09, 'triangle']],
+  check: [[660, .1], [880, .14]],
+  no:    [[220, .12, 'triangle']],
+  win:   [[523, .12], [659, .12], [784, .12], [1047, .35]],
+  lose:  [[392, .18], [330, .18], [262, .32]],
+};
+function beep(name) {
+  if (!soundOn) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => {
+      const o = actx.createOscillator(), g = actx.createGain();
+      o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.2, t); g.gain.exponentialRampToValueAtTime(.001, t + d);
+      o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d;
+    });
+  } catch (e) {}
+}
+
+/* ===== 규칙 계산(ffish) ===== */
+let FF = null, board = null, history = [];   // history: 둔 수(uci) 목록
+const variant = () => bikjang ? 'janggi' : 'janggicasual';
+function startFen() {
+  const cpuSetup = ['NBNB', 'BNBN', 'NBBN', 'BNNB'][Math.floor(Math.random() * 4)];
+  const cho = myColor === 'w' ? mySetup : cpuSetup, han = myColor === 'b' ? mySetup : cpuSetup;
+  const row = a => { let s = '', e = 0; for (const x of a) { if (!x) { e++; continue; } if (e) { s += e; e = 0; } s += x; } return s + (e || ''); };
+  const choRow = row(['R', cho[0], cho[1], 'A', '', 'A', cho[2], cho[3], 'R']);
+  const hanRow = row(['r', han[3], han[2], 'a', '', 'a', han[1], han[0], 'r']).toLowerCase();
+  return `${hanRow}/4k4/1c5c1/p1p1p1p1p/9/9/P1P1P1P1P/1C5C1/4K4/${choRow} w - - 0 1`;
+}
+const SQ_RE = /^([a-i])(10|[1-9])([a-i])(10|[1-9])$/;
+function parseMove(u) { const m = SQ_RE.exec(u || ''); return m ? { from: m[1] + m[2], to: m[3] + m[4], pass: m[1] + m[2] === m[3] + m[4], uci: u } : null; }
+function legal() { const s = board.legalMoves(); return s ? s.split(' ').filter(Boolean).map(parseMove) : []; }
+function pieces() {                     // FEN → { 'e2': {c:'w', t:'k'} ... }
+  const out = {}, rows = board.fen().split(' ')[0].split('/');
+  rows.forEach((row, i) => {
+    const rank = 10 - i; let f = 0;
+    for (let j = 0; j < row.length; j++) {
+      const ch = row[j];
+      if (/\d/.test(ch)) { let n = ch; if (/\d/.test(row[j + 1] || '')) n += row[++j]; f += Number(n); continue; }
+      out['abcdefghi'[f] + rank] = { c: ch === ch.toUpperCase() ? 'w' : 'b', t: ch.toLowerCase() };
+      f++;
+    }
+  });
+  return out;
+}
+function material(ps) { const s = { w: 0, b: DUM }; for (const k in ps) s[ps[k].c] += VALUE[ps[k].t]; return s; }
+const turn = () => board.turn() ? 'w' : 'b';
+
+/* ===== 컴퓨터 두뇌 (Fairy-Stockfish — 홈페이지 주소에서만) ===== */
+let sf = null, pending = null, skipNext = 0, queue = Promise.resolve();
+async function startEngine() {
+  if (!window.crossOriginIsolated || typeof Stockfish !== 'function') return;
+  try { sf = await Stockfish(); } catch (e) { sf = null; return; }
+  sf.addMessageListener(line => {
+    if (!line.startsWith('bestmove')) return;
+    if (skipNext) { skipNext--; return; }
+    if (pending) { const p = pending; pending = null; p(line.split(' ')[1]); }
+  });
+  sf.postMessage('uci');
+}
+function engineThink(fen, opt) {
+  queue = queue.then(() => new Promise(res => {
+    if (!sf) return res(null);
+    const timer = setTimeout(() => { if (pending) { pending = null; skipNext++; sf.postMessage('stop'); res(null); } }, 20000);
+    pending = m => { clearTimeout(timer); res(m); };
+    sf.postMessage('setoption name UCI_Variant value ' + variant());
+    sf.postMessage('setoption name Skill Level value ' + opt.skill);
+    sf.postMessage('position fen ' + fen);
+    sf.postMessage('go movetime ' + opt.movetime);
+  }));
+  return queue;
+}
+/* 두뇌가 없을 때: 점수만 보는 간단한 수읽기 */
+function simpleThink(depth) {
+  const me = turn();
+  function evalPos() { const m = material(pieces()); return (m[turn()] - m[turn() === 'w' ? 'b' : 'w']); }
+  function order(ms) { return ms.filter(m => !m.pass).sort((a, b) => board.isCapture(b.uci) - board.isCapture(a.uci)); }
+  function nega(d, alpha, beta) {
+    if (board.isGameOver()) { const r = board.result(); if (r === '1/2-1/2') return 0; return -1000; }
+    if (d === 0) return evalPos();
+    let ms = order(legal()); if (!ms.length) ms = legal();
+    let best = -Infinity;
+    for (const m of ms) {
+      board.push(m.uci); const v = -nega(d - 1, -beta, -alpha); board.pop();
+      if (v > best) best = v; if (v > alpha) alpha = v; if (alpha >= beta) break;
+    }
+    return best;
+  }
+  let ms = order(legal()); if (!ms.length) ms = legal();
+  let best = null, bestV = -Infinity;
+  for (const m of ms) {
+    board.push(m.uci); const v = -nega(depth - 1, -Infinity, -bestV + 0.001) + Math.random() * 0.6; board.pop();
+    if (v > bestV) { bestV = v; best = m; }
+  }
+  return best ? best.uci : null;
+}
+async function think(opt) {
+  let u = null;
+  if (sf) u = await engineThink(board.fen(), opt);
+  const ms = legal();
+  if (!u || !ms.some(m => m.uci === u)) { await new Promise(r => setTimeout(r, 30)); u = simpleThink(opt.depth); }
+  return u;
+}
+
+/* ===== 그리기 ===== */
+const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+const wrap = document.getElementById('wrap'), cover = document.getElementById('cover');
+let W = 400, H = 440, cell = 44, pad = 26;
+let state = 'loading', sel = null, targets = [], lastMove = null, hintMove = null, anim = null, gen = 0;
+const FILES = 'abcdefghi';
+function toXY(s) {                     // 'e2' → 화면 좌표 (내 쪽이 아래)
+  let c = FILES.indexOf(s[0]), r = 10 - Number(s.slice(1));
+  if (myColor === 'b') { c = 8 - c; r = 9 - r; }
+  return [pad + c * cell, pad + r * cell];
+}
+function fromXY(x, y) {
+  let c = Math.round((x - pad) / cell), r = Math.round((y - pad) / cell);
+  if (c < 0 || c > 8 || r < 0 || r > 9) return null;
+  if (myColor === 'b') { c = 8 - c; r = 9 - r; }
+  return FILES[c] + (10 - r);
+}
+function resize() {
+  const main = document.querySelector('main'), cs = getComputedStyle(main);
+  const others = ['.info', '.caps', '.msg', '.btns'].reduce((h, q) => h + document.querySelector(q).offsetHeight, 0) + 4 * 8;
+  const availH = main.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom) - others;
+  const availW = main.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  cell = Math.floor(Math.max(20, Math.min(availW / 9.1, availH / 10.1)));
+  pad = cell * .55; W = Math.round(cell * 8 + pad * 2); H = Math.round(cell * 9 + pad * 2);
+  wrap.style.height = H + 'px';
+  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  const dpr = window.devicePixelRatio || 1;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
+}
+window.addEventListener('resize', resize);
+const RAD = { k: .47, r: .4, c: .4, n: .4, b: .4, a: .33, p: .33 };
+function piece(x, y, p, alpha) {
+  const R = cell * RAD[p.t];
+  ctx.globalAlpha = alpha || 1;
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) { const a = Math.PI / 8 + i * Math.PI / 4; ctx.lineTo(x + R * Math.cos(a), y + R * Math.sin(a)); }
+  ctx.closePath();
+  ctx.fillStyle = '#fbf3df'; ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = cell * .08; ctx.shadowOffsetY = cell * .04;
+  ctx.fill(); ctx.shadowColor = 'transparent';
+  ctx.strokeStyle = COLOR[p.c]; ctx.lineWidth = Math.max(1.5, cell * .045); ctx.stroke();
+  ctx.fillStyle = COLOR[p.c];
+  ctx.font = p.c === 'w' ? `400 ${R * 1.3}px "gukdanbi-cho",serif`
+                         : `700 ${R * 1.15}px "Noto Serif KR","Nanum Myeongjo","AppleMyungjo","Noto Serif CJK KR",serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText((p.c === 'w' ? CHO_CH : HAN_CH)[p.t], x, y + R * .06);
+  ctx.globalAlpha = 1;
+}
+function line(a, b) { const [x1, y1] = toXY(a), [x2, y2] = toXY(b); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); }
+function mark(s, color, r) { const [x, y] = toXY(s); ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, cell * r, 0, Math.PI * 2); ctx.fill(); }
+function draw() {
+  ctx.fillStyle = '#e8c27a'; ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#5a3d22'; ctx.lineWidth = 1.2;
+  for (let r = 1; r <= 10; r++) line('a' + r, 'i' + r);
+  for (const f of FILES) line(f + 1, f + 10);
+  line('d1', 'f3'); line('f1', 'd3'); line('d8', 'f10'); line('f8', 'd10');   // 궁성
+  if (!board) return;
+  if (lastMove) { mark(lastMove.from, 'rgba(255,214,0,.55)', .3); mark(lastMove.to, 'rgba(255,214,0,.6)', .5); }
+  if (hintMove) { mark(hintMove.from, 'rgba(160,110,255,.6)', .48); if (!hintMove.pass) mark(hintMove.to, 'rgba(160,110,255,.7)', .48); }
+  if (sel) mark(sel, 'rgba(60,170,90,.7)', .5);
+  const ps = pieces();
+  if (board.isCheck()) for (const s in ps) if (ps[s].t === 'k' && ps[s].c === turn()) {
+    const [x, y] = toXY(s), g = ctx.createRadialGradient(x, y, cell * .1, x, y, cell * .75);
+    g.addColorStop(0, 'rgba(255,0,0,.95)'); g.addColorStop(1, 'rgba(255,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(x - cell, y - cell, cell * 2, cell * 2);
+  }
+  for (const s in ps) { if (anim && s === anim.to) continue; const [x, y] = toXY(s); piece(x, y, ps[s]); }
+  for (const m of targets) {
+    if (m.pass) continue;
+    const [x, y] = toXY(m.to);
+    if (ps[m.to]) { ctx.strokeStyle = 'rgba(20,110,50,.85)'; ctx.lineWidth = cell * .08; ctx.beginPath(); ctx.arc(x, y, cell * .48, 0, Math.PI * 2); ctx.stroke(); }
+    else mark(m.to, 'rgba(20,110,50,.7)', .16);
+  }
+  if (anim) {
+    const t = Math.min(1, (performance.now() - anim.t0) / anim.ms), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    const [x0, y0] = toXY(anim.from), [x1, y1] = toXY(anim.to);
+    piece(x0 + (x1 - x0) * e, y0 + (y1 - y0) * e, anim.p);
+  }
+}
+function animate(m, p, ms) {
+  if (m.pass) return Promise.resolve();
+  return new Promise(res => {
+    anim = { from: m.from, to: m.to, p, t0: performance.now(), ms };
+    const step = () => { draw(); if (performance.now() - anim.t0 < ms) requestAnimationFrame(step); else { anim = null; draw(); res(); } };
+    requestAnimationFrame(step);
+  });
+}
+
+/* ===== 진행 ===== */
+const msg = document.getElementById('msg'), undoBtn = document.getElementById('undoBtn'), hintBtn = document.getElementById('hintBtn'), passBtn = document.getElementById('passBtn');
+function say(t) { msg.textContent = t; }
+const chip = (c, t) => `<span class="pc mini ${c === 'w' ? 'cho' : 'han'}${t === 'k' ? '' : ' sm'}">${(c === 'w' ? CHO_CH : HAN_CH)[t]}</span>`;
+function showTurn() {
+  document.getElementById('meBox').classList.toggle('turn', state === 'human');
+  document.getElementById('cpuBox').classList.toggle('turn', state === 'cpu');
+  const n = history.length, first = myColor === 'w' ? 0 : 1;
+  undoBtn.disabled = !((state === 'human' || state === 'over') && n > first);
+  hintBtn.disabled = state !== 'human';
+  passBtn.disabled = !(state === 'human' && board && legal().some(m => m.pass));
+}
+function showRecord() {
+  document.getElementById('meLabel').innerHTML = chip(myColor, 'k') + ' ' + sideName(myColor);
+  document.getElementById('cpuLabel').innerHTML = chip(cpuColor(), 'k') + ' ' + LEVEL_NAMES[level];
+  const [w, l, d] = rec[level];
+  document.getElementById('record').textContent = `${w}승 ${l}패` + (d ? ` ${d}무` : '');
+}
+function showScore() {                 // 잡은 말 + 점수(한은 덤 1.5)
+  if (!board) return;
+  const ps = pieces(), left = { w: {}, b: {} };
+  for (const s in ps) left[ps[s].c][ps[s].t] = (left[ps[s].c][ps[s].t] || 0) + 1;
+  const START = { r: 2, c: 2, n: 2, b: 2, a: 2, p: 5 };
+  const took = by => { const v = by === 'w' ? 'b' : 'w'; let h = '';
+    for (const t of 'rcnbap') for (let i = 0; i < START[t] - (left[v][t] || 0); i++) h += chip(v, t); return h; };
+  const sc = material(ps), fmt = x => x;
+  document.getElementById('capMe').innerHTML = `<b class="score">${fmt(sc[myColor])}점</b>` + took(myColor);
+  document.getElementById('capCpu').innerHTML = took(cpuColor()) + `<b class="score">${fmt(sc[cpuColor()])}점</b>`;
+}
+function refresh() { showTurn(); showScore(); draw(); }
+
+function newGame() {
+  if (!FF) return;
+  gen++; resize();
+  if (board) board.delete();
+  board = new FF.Board(variant(), startFen());
+  history = []; sel = null; targets = []; lastMove = null; hintMove = null;
+  cover.hidden = true; cover.classList.remove('end');
+  showRecord();
+  if (myColor === 'w') { state = 'human'; say('초(楚) 차례입니다. 움직일 말을 누르세요'); refresh(); }
+  else { state = 'cpu'; refresh(); cpuTurn(); }
+}
+function moveText(m, p, cap) {
+  if (m.pass) return '한 수 쉬었어요';
+  return `${ig(nm(p))} 움직였어요` + (cap ? ` — ${eul(nm(cap))} 잡음` : '');
+}
+async function play(m, who) {         // 수 두기. 끝나면 true
+  const before = pieces(), p = before[m.from], cap = m.pass ? null : before[m.to];
+  if (!board.push(m.uci)) return null;
+  history.push(m.uci);
+  board.pop(); await animate(m, p, who === 'cpu' ? 340 : 180); board.push(m.uci);
+  lastMove = m; hintMove = null; sel = null; targets = [];
+  beep(board.isCheck() ? 'check' : cap ? 'take' : 'move');
+  refresh();
+  if (board.isGameOver()) { end(); return true; }
+  return { p, cap };
+}
+async function cpuTurn() {
+  const my = gen;
+  state = 'cpu'; showTurn(); say('컴퓨터가 생각하고 있어요…');
+  const t0 = performance.now();
+  const u = await think(LEVELS[level]);
+  if (my !== gen) return;
+  const m = parseMove(u) || legal()[0];
+  const wait = 500 - (performance.now() - t0);
+  if (wait > 0) await new Promise(r => setTimeout(r, wait));
+  if (my !== gen) return;
+  const r = await play(m, 'cpu');
+  if (r === true || my !== gen) return;
+  state = 'human'; showTurn();
+  const extra = board.isBikjang && board.isBikjang() ? ' · ⚠️ 빅장! 피하지 않으면 점수로 승부' : '';
+  say((board.isCheck() ? '⚠️ 장군! 궁을 지키세요 · ' : '') + '컴퓨터: ' + moveText(m, r.p, r.cap) + extra);
+}
+async function human(m) {
+  state = 'moving';
+  const r = await play(m, 'me');
+  if (r === true || r === null) { if (r === null) state = 'human'; return; }
+  cpuTurn();
+}
+function tap(s) {
+  if (state !== 'human' || !s) return;
+  const ms = legal();
+  const hit = sel && ms.find(m => m.from === sel && m.to === s && !m.pass);
+  if (hit) { human(hit); return; }
+  const p = pieces()[s];
+  if (p && p.c === myColor) {
+    if (sel === s) { sel = null; targets = []; say('다른 말을 골라 보세요'); draw(); return; }
+    sel = s; targets = ms.filter(m => m.from === s && !m.pass);
+    say(targets.length ? `${nm(p)} — ${WAYS[p.t]}` : `${eun(nm(p))} 지금 움직일 곳이 없어요`);
+    if (!targets.length) beep('no');
+    draw(); return;
+  }
+  if (sel) { beep('no'); say('그곳으로는 갈 수 없어요. 초록 점을 눌러 주세요'); }
+}
+cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(); tap(fromXY(e.clientX - r.left, e.clientY - r.top)); });
+
+function end() {
+  state = 'over'; showTurn();
+  const r = board.result(), sc = material(pieces());
+  let win = null, why = '';
+  if (r === '1-0' || r === '0-1') {
+    win = (r === '1-0') === (myColor === 'w');
+    if (board.isBikjang && board.isBikjang()) why = `빅장 — 점수로 승부 (초 ${sc.w}점 : 한 ${sc.b}점)`;
+    else if (!legal().length || board.isCheck()) why = win ? '외통수! 상대 궁이 피할 곳이 없어요' : '외통수… 내 궁이 피할 곳이 없어요';
+    else why = `점수로 승부 (초 ${sc.w}점 : 한 ${sc.b}점)`;
+  } else why = '비겼어요 (같은 수가 되풀이되었거나 수가 너무 길어졌어요)';
+  if (win === true) { rec[level][0]++; beep('win'); }
+  else if (win === false) { rec[level][1]++; beep('lose'); }
+  else rec[level][2] = (rec[level][2] || 0) + 1;
+  save('gukdanbi-janggi-record', JSON.stringify(rec)); showRecord();
+  const t = win === true ? '🎉 이겼습니다!' : win === false ? '아쉽게 졌습니다' : '비겼습니다';
+  say(t);
+  const prize = win === true && typeof FLOWERS !== 'undefined' && FLOWERS.length ? FLOWERS[Math.floor(Math.random() * FLOWERS.length)] : null;
+  if (prize) { const im = new Image(); im.src = 'assets/img/flowers/' + prize.file; }
+  const p = why + (win === true ? ` · ${LEVEL_NAMES[level]} 단계 컴퓨터를 이기셨어요` : '');
+  setTimeout(() => openCover(t, prize ? p + ' · 국단비님이 꽃 한 송이를 선물로 드려요' : p, '다시 두기', true, prize, win === false), 1100);
+}
+
+undoBtn.onclick = () => {             // 내 수와 컴퓨터 수를 함께 되돌림
+  if (state !== 'human' && state !== 'over') return;
+  if (!history.length) return;
+  const lastIsMine = (history.length % 2 === 1) === (myColor === 'w');
+  const n = lastIsMine ? 1 : 2;
+  if (history.length - n < (myColor === 'w' ? 0 : 1)) return;
+  gen++;
+  for (let k = 0; k < n; k++) { board.pop(); history.pop(); }
+  lastMove = history.length ? parseMove(history[history.length - 1]) : null;
+  sel = null; targets = []; hintMove = null;
+  state = 'human'; cover.hidden = true; cover.classList.remove('end');
+  say(`한 수 물렀어요. ${sideName(myColor)} 차례입니다`); refresh();
+};
+hintBtn.onclick = async () => {
+  if (state !== 'human') return;
+  const my = gen; hintBtn.disabled = true; say('💡 좋은 수를 찾고 있어요…');
+  const u = await think(HINT);
+  if (my !== gen || state !== 'human') return;
+  hintBtn.disabled = false;
+  const m = parseMove(u);
+  if (!m) { say('지금은 도움 수를 찾지 못했어요'); return; }
+  hintMove = m;
+  if (m.pass) { sel = null; targets = []; say('💡 지금은 [한 수 쉬기]가 좋아요'); draw(); return; }
+  sel = m.from; targets = legal().filter(x => x.from === m.from && !x.pass);
+  say(`💡 ${eul(nm(pieces()[m.from]))} 보라색 자리로 옮겨 보세요`); draw();
+};
+passBtn.onclick = () => {
+  if (state !== 'human') return;
+  const m = legal().find(x => x.pass);
+  if (!m) { say('장군을 받았을 때는 쉴 수 없어요'); beep('no'); return; }
+  if (!confirm('이번 차례를 쉴까요? (말을 움직이지 않고 넘깁니다)')) return;
+  human(m);
+};
+document.getElementById('newBtn').onclick = () => {
+  if (state !== 'over' && history.length > 2 && !confirm('지금 판을 그만두고 새로 둘까요?')) return;
+  gen++; state = 'ready'; openCover('將 장기', '', '시작하기', false);
+};
+
+/* ===== 덮개 ===== */
+const levelEl = document.getElementById('level'), sideEl = document.getElementById('sideSel'), setupEl = document.getElementById('setupSel'), bikEl = document.getElementById('bikSel');
+function showOpts() {
+  [...levelEl.children].forEach(b => b.classList.toggle('on', Number(b.dataset.l) === level));
+  [...sideEl.children].forEach(b => b.classList.toggle('on', b.dataset.c === myColor));
+  [...setupEl.children].forEach(b => b.classList.toggle('on', b.dataset.s === mySetup));
+  [...bikEl.children].forEach(b => b.classList.toggle('on', (b.dataset.b === '1') === bikjang));
+}
+[...levelEl.children].forEach(b => b.onclick = () => { level = Number(b.dataset.l); save('gukdanbi-janggi-level', level); showOpts(); showRecord(); });
+[...sideEl.children].forEach(b => b.onclick = () => { myColor = b.dataset.c; save('gukdanbi-janggi-color', myColor); showOpts(); showRecord(); draw(); });
+[...setupEl.children].forEach(b => b.onclick = () => { mySetup = b.dataset.s; save('gukdanbi-janggi-setup', mySetup); showOpts(); });
+[...bikEl.children].forEach(b => b.onclick = () => { bikjang = b.dataset.b === '1'; save('gukdanbi-janggi-bik', bikjang ? '1' : '0'); showOpts(); });
+const LOSE_IMG = 'assets/img/etc/omok-lose.jpg';
+const FILE_NOTE = '※ 맥북 파일로 직접 열면 컴퓨터 두뇌가 꺼져 간단한 계산으로 둡니다. 홈페이지 주소에서는 제 실력으로 둡니다';
+function openCover(t, p, btn, isEnd, prize, lose) {
+  const pz = document.getElementById('prize');
+  pz.hidden = !(prize || lose);
+  pz.classList.toggle('lose', !!lose);
+  if (prize) { document.getElementById('prizeImg').src = 'assets/img/flowers/' + prize.file; document.getElementById('prizeName').textContent = '🎁 국단비님의 선물 · 🌸 ' + prize.name; }
+  if (lose) { document.getElementById('prizeImg').src = LOSE_IMG; document.getElementById('prizeName').textContent = '다음 판에는 꼭 이겨 보세요!'; }
+  cover.classList.toggle('win', !!(prize || lose));
+  document.getElementById('cTitle').textContent = t;
+  document.getElementById('cText').textContent = p || (!isEnd && location.protocol === 'file:' ? FILE_NOTE : '');
+  document.getElementById('cBtn').textContent = btn;
+  for (const id of ['rules', 'how', 'sideSel', 'level', 'credit']) document.getElementById(id).hidden = isEnd;
+  document.querySelectorAll('.cover .opt').forEach(o => o.hidden = isEnd);
+  document.getElementById('cBtn2').hidden = !isEnd;
+  document.getElementById('cBtn3').hidden = !(isEnd && !prize);
+  cover.classList.toggle('end', isEnd);
+  showOpts(); cover.hidden = false;
+}
+document.getElementById('cBtn').onclick = () => { if (FF) newGame(); else say('장기판을 준비하고 있어요… 잠시만요'); };
+document.getElementById('cBtn3').onclick = () => undoBtn.click();
+document.getElementById('cBtn2').onclick = () => openCover('將 장기', '', '시작하기', false);
+
+/* ===== 환영 장면 ===== */
+const intro = document.getElementById('intro');
+let introDone = false;
+function endIntro() {
+  if (introDone) return;
+  introDone = true; intro.classList.add('out');
+  setTimeout(() => { intro.hidden = true; resize(); openCover('將 장기', '', '시작하기', false); }, 450);
+}
+intro.onclick = endIntro;
+setTimeout(endIntro, 3500);
+document.addEventListener('keydown', e => { if (!introDone && (e.key === 'Enter' || e.key === ' ')) endIntro(); });
+
+function onRules(m) { FF = m; say(''); resize(); }
+if (document.fonts && document.fonts.load) document.fonts.load('40px "gukdanbi-cho"', '楚士象马车包卒').then(() => draw()).catch(() => {});
+if (window.FFISH) onRules(window.FFISH); else window.FFISH_READY.push(onRules);
+startEngine();
+resize(); showRecord(); showTurn();
+</script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>

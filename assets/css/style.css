@@ -222,3 +222,26 @@ html{scroll-snap-type:y proximity;scroll-padding-top:72px}
   .ask-grid{grid-template-columns:1fr}
   .kakao-btn,.mail-btn{padding:14px 26px;font-size:18px}
 }
+
+/* 보드게임 카드(장기·체스·바둑·오목) — 진한 하늘색 */
+.play-card.board{background:linear-gradient(90deg,#2f78c9,#1f63b0);border-color:#154a87}
+.play-card.board .pc-text small{color:#eaf3ff;font-weight:500}
+.play-card.board .pc-go{background:#0b2f66}
+
+/* 놀이터 카드 묶음 색 (2026-11-23): 공부 = 진한 청색, 블록 쌓기·벽돌 깨기 = 연한 초록 */
+.play-card.study{background:linear-gradient(90deg,#1f3f94,#16307a);border-color:#0d1f55}
+.play-card.study .pc-text small{color:#dfe7ff;font-weight:500}
+.play-card.study .pc-go{background:#4a8fe3}
+.play-card.green{background:linear-gradient(90deg,#b9e2b0,#a3d699);border-color:#5e9e55;color:#1d3b19}
+.play-card.green .pc-text small{color:#2f5229;font-weight:500}
+.play-card.green .pc-go{background:#3f8236;color:#fff}
+/* 2026-11-23 색 바꿈: 국단비 세 카드 = 연보라, 보드게임(장기·체스·바둑·오목·화투) = 연분홍 — 바탕이 밝아 글씨는 짙게 */
+.play-card.gdb{background:linear-gradient(90deg,#e6d8f8,#d8c4f2);border-color:#9a76d1;color:#3b2160}
+.play-card.gdb .pc-icon{color:#5b34a0}
+.play-card.gdb .pc-text small{color:#4f2f7a}
+.play-card.gdb .pc-go{background:#7a4fc2;color:#fff}
+.play-card.board{background:linear-gradient(90deg,#fbdce6,#f6c8d7);border-color:#d97a98;color:#4a1f2c}
+.play-card.board .pc-text small{color:#6b2f42}
+.play-card.board .pc-go{background:#c2456b;color:#fff}
+/* 국단비 세 카드 한자 아이콘: 진보라 동그라미 + 흰 글자 (2026-11-23) */
+.play-card.gdb .pc-icon{width:58px;height:58px;display:flex;align-items:center;justify-content:center;border-radius:50%;font-size:34px;flex:none;background:#5b34a0;color:#fff;box-shadow:0 0 0 3px #fff inset}
