@@ -11,7 +11,7 @@ const FLOWERS = [
   { name: '각시붓꽃', file: 'f107.jpg' },
   { name: '감꽃', file: 'f048.jpg' },
   { name: '개나리', file: 'f168.jpg' },
-  { name: '개나리', file: 'f204.jpg' },
+  { name: '영춘화', file: 'f204.jpg' },
   { name: '개양귀비', file: 'f015.jpg' },
   { name: '개양귀비', file: 'f109.jpg' },
   { name: '개양귀비', file: 'f210.jpg' },

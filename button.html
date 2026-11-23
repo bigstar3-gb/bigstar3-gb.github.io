@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>국단비 놀이터 | 이 버튼 뭐지? (스마트폰 공부)</title>
+  <meta name="description" content="국단비 놀이터 — 스마트폰·앱 버튼의 모양과 뜻을 직접 눌러 보며 익히는 놀이">
+  <link rel="icon" href="assets/img/etc/heart.png">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#3d2a23">
+  <link rel="apple-touch-icon" href="assets/img/app/apple-touch-icon.png">
+  <style>
+    :root{
+      --wood:#3d2a23; --wood-dark:#2b231f; --red:#c8102e; --accent:#f0a37b;
+      --muted:#e6dcd4; --line:rgba(255,255,255,.18); --green:#3f9b5a; --purple:#c9a4ff; --cream:#fffaf3;
+      --font:"Pretendard","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{min-height:100%}
+    body{font-family:var(--font);background:var(--wood);color:#fff;display:flex;flex-direction:column;align-items:center;
+      -webkit-user-select:none;user-select:none;touch-action:manipulation}
+    a{color:inherit;text-decoration:none}
+    button,input{font-family:var(--font)}
+    button{cursor:pointer}
+
+    /* 상단 띠 */
+    .top{width:100%;height:56px;flex:none;display:flex;align-items:center;justify-content:space-between;
+      padding:0 4vw;background:var(--wood-dark);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:4}
+    .top .home{display:flex;align-items:center;gap:8px;font-weight:700;font-size:17px}
+    .top .home img{height:26px}
+    .top h1{font-size:18px;font-weight:700;color:var(--accent)}
+    .sound{width:44px;height:38px;border-radius:10px;border:1px solid var(--line);background:none;color:#fff;font-size:20px}
+    .sound.on{border-color:var(--accent);background:rgba(240,163,123,.15)}
+
+    main{width:100%;max-width:720px;display:flex;flex-direction:column;padding:12px 4vw 24px;gap:12px}
+
+    /* 위 정보 줄 */
+    .info{display:flex;gap:10px}
+    .info .box{flex:1;background:var(--wood-dark);border:1px solid var(--line);border-radius:10px;padding:6px 10px;text-align:center}
+    .info .label{font-size:13px;color:var(--muted)}
+    .info .val{font-size:22px;font-weight:800;line-height:1.3}
+    .info .val small{font-size:15px;color:var(--muted);font-weight:600}
+
+    /* 속담 카드 */
+    .card{position:relative;background:var(--cream);color:var(--wood-dark);border:2px solid var(--red);border-radius:14px;
+      padding:44px 18px 18px;min-height:150px;display:flex;flex-direction:column;justify-content:center;gap:10px}
+    .card .q{font-size:clamp(24px,6.4vw,32px);font-weight:800;line-height:1.55;word-break:keep-all;text-align:center}
+    .card .q .blank{display:inline-block;min-width:2.2em;padding:0 .2em;border-bottom:3px solid var(--red);color:var(--red);letter-spacing:.08em}
+    .card .q .ans{color:var(--green);border-bottom:3px solid var(--green)}
+    .card .q .tail{color:#b9a99a}
+    .card .mean{font-size:18px;line-height:1.6;color:#5a4a3f;text-align:center;word-break:keep-all;border-top:1px dashed #d8c8b8;padding-top:10px}
+    .card .mean[hidden]{display:none}
+    .card .mode{position:absolute;left:12px;top:8px;font-size:13px;font-weight:700;color:#a08c7c}
+    .speak{position:absolute;right:8px;top:6px;width:46px;height:40px;border-radius:10px;border:1.5px solid #d8c8b8;background:#fff;font-size:21px}
+    .speak.on{background:var(--accent);border-color:var(--accent)}
+
+    /* 보기 버튼 */
+    .choices{display:flex;flex-direction:column;gap:10px}
+    .choices button{min-height:60px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--wood-dark);color:#fff;
+      font-size:21px;font-weight:800;word-break:keep-all;line-height:1.3;text-align:left;display:flex;gap:12px;align-items:center}
+    .choices button i{font-style:normal;flex:none;width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.12);
+      font-size:16px;display:flex;align-items:center;justify-content:center}
+    .choices button:disabled{cursor:default}
+    .choices button.right{background:var(--green);border-color:var(--green)}
+    .choices button.wrong{background:var(--red);border-color:var(--red)}
+    .choices button.dim{opacity:.45}
+
+    /* 직접 쓰기 */
+    .write{display:flex;flex-direction:column;gap:10px}
+    .write[hidden],.choices[hidden]{display:none}
+    .write .row{display:flex;gap:8px}
+    .write input{flex:1;min-width:0;height:60px;border-radius:14px;border:2px solid var(--accent);background:#fff;color:var(--wood-dark);
+      font-size:24px;font-weight:800;padding:0 14px;-webkit-user-select:text;user-select:text}
+    .write input:disabled{opacity:.6}
+    .write .ok{flex:none;width:96px;border-radius:14px;border:none;background:var(--red);color:#fff;font-size:20px;font-weight:800}
+    .write .hint{align-self:flex-start;padding:8px 16px;border-radius:20px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:16px;font-weight:700}
+    .write .hint:disabled{opacity:.4}
+    .write .say{font-size:17px;color:var(--muted);min-height:24px}
+
+    .result{font-size:22px;font-weight:800;text-align:center}
+    .result.good{color:#7fd69a}.result.bad{color:#ff8a8a}
+    .next{height:58px;border-radius:14px;border:none;background:var(--accent);color:var(--wood-dark);font-size:20px;font-weight:800}
+    .next[hidden],.result[hidden]{display:none}
+
+    /* 덮개 공통 (환영·시작·끝) */
+    .layer{position:fixed;inset:56px 0 0 0;z-index:5;background:var(--wood);display:flex;flex-direction:column;align-items:center;
+      justify-content:center;text-align:center;padding:20px 5vw;gap:14px;overflow-y:auto}
+    .layer[hidden]{display:none}
+    .layer h2{font-size:clamp(24px,6vw,32px);color:var(--accent)}
+    .layer p{font-size:18px;color:var(--muted);line-height:1.7;word-break:keep-all}
+    .big{padding:16px 40px;border-radius:40px;border:none;background:var(--red);color:#fff;font-size:21px;font-weight:800}
+    .ghost{padding:12px 28px;border-radius:40px;border:1.5px solid #fff;background:none;color:#fff;font-size:17px;font-weight:700}
+
+    /* 환영 장면 */
+    .intro{background:#1a1411;cursor:pointer}
+    .intro img{width:min(55vw,240px);animation:heartDrop 1.3s cubic-bezier(.3,0,.4,1) both;
+      -webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 22%);mask-image:linear-gradient(to bottom,transparent 0,#000 22%)}
+    .intro .welcome{font-size:clamp(22px,5.5vw,30px);font-weight:800;line-height:1.5;color:#fff;opacity:0;animation:fadeUp .8s ease 1.2s forwards}
+    .intro .welcome b{color:var(--purple)}
+    .intro .skip{font-size:14px;color:var(--muted);opacity:0;animation:fadeUp .6s ease 1.8s forwards}
+    .intro.out{animation:fadeOut .5s ease forwards}
+    @keyframes heartDrop{0%{transform:translateY(-140%) rotate(-12deg);opacity:0}15%{opacity:1}60%{transform:translateY(0) rotate(0)}
+      75%{transform:translateY(-14%)}88%{transform:translateY(0)}94%{transform:translateY(-4%)}100%{transform:translateY(0)}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+    @keyframes fadeOut{to{opacity:0}}
+
+    /* 시작 화면 */
+    .modes{display:flex;flex-direction:column;gap:8px;width:100%;max-width:440px}
+    .modes button{padding:12px 16px;border-radius:14px;border:1.5px solid var(--line);background:var(--wood-dark);color:#fff;text-align:left;
+      font-size:19px;font-weight:800;line-height:1.35}
+    .modes button small{display:block;font-size:15px;font-weight:600;color:var(--muted)}
+    .modes button.on{border-color:var(--accent);background:rgba(240,163,123,.18)}
+    .size{display:flex;gap:8px}
+    .size button{padding:10px 22px;border-radius:12px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:18px;font-weight:700}
+    .size button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .auto{display:flex;align-items:center;gap:10px;font-size:17px;color:var(--muted);cursor:pointer}
+    .auto input{width:22px;height:22px;accent-color:var(--accent)}
+    .record{font-size:16px;color:var(--muted)}
+
+    /* 끝 화면 */
+    .done{justify-content:flex-start}
+    .review{width:100%;max-width:560px;display:flex;flex-direction:column;gap:8px;text-align:left}
+    .review h3{font-size:18px;color:var(--accent);margin-top:4px}
+    .review div{background:var(--cream);color:var(--wood-dark);border-radius:12px;padding:10px 14px}
+    .review b{display:block;font-size:19px;line-height:1.4;word-break:keep-all}
+    .review span{display:block;font-size:16px;color:#5a4a3f;line-height:1.5;margin-top:2px;word-break:keep-all}
+    .prize{width:min(70vw,300px);border-radius:14px;overflow:hidden;border:2px solid var(--purple);background:var(--wood-dark);animation:pop .6s ease}
+    .prize img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+    .prize figcaption{font-size:18px;font-weight:800;padding:8px 6px;color:#fff}
+    .done .btns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;padding-bottom:10px}
+    @keyframes pop{0%{transform:scale(0)}70%{transform:scale(1.06)}100%{transform:scale(1)}}
+
+    @media (max-width:640px){
+      .top h1 .long{display:none}
+      .info .val{font-size:19px}
+      .choices button{min-height:56px;font-size:19px}
+    }
+  </style>
+  <style>
+    .cats{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:440px}
+    .cats button{padding:8px 14px;border-radius:20px;border:1.5px solid var(--line);background:var(--wood-dark);color:#fff;font-size:16px;font-weight:700}
+    .cats button.on{background:var(--accent);border-color:var(--accent);color:var(--wood-dark)}
+    .review .rv{display:flex;gap:12px;align-items:center}
+    .card{min-height:120px;padding:40px 16px 14px}
+    .card .q{font-size:clamp(21px,5.6vw,27px)}
+    .card .big-icon{width:110px;height:110px;margin:0 auto;border-radius:24px;background:#fff;border:2px solid #e3d6ca;color:#222;
+      display:flex;align-items:center;justify-content:center}
+    .card .big-icon svg{width:72px;height:72px}
+    .combo{position:absolute;left:50%;top:8px;transform:translateX(-50%);font-size:15px;font-weight:900;color:#e2572b;white-space:nowrap}
+    .combo.pop{animation:pop .45s ease}
+    .hintBtn{align-self:center;padding:8px 18px;border-radius:20px;border:1.5px solid var(--line);background:none;color:var(--muted);font-size:16px;font-weight:700}
+    .hintBtn[hidden]{display:none}
+    .hintTxt{font-size:18px;color:#ffd98a;text-align:center;font-weight:700}
+
+    /* 아이콘 보기 (어떤 버튼일까?) */
+    .icons{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .icons button{position:relative;height:118px;border-radius:16px;border:3px solid var(--line);background:#fff;color:#222;display:flex;align-items:center;justify-content:center}
+    .icons button svg{width:58px;height:58px}
+    .icons button i{position:absolute;left:8px;top:5px;font-style:normal;font-size:14px;font-weight:800;color:#a08c7c}
+    .icons button.right{border-color:#2fbf5a;box-shadow:0 0 0 3px #2fbf5a}
+    .icons button.wrong{border-color:var(--red);box-shadow:0 0 0 3px var(--red)}
+    .icons button.dim{opacity:.4}
+    .icons button .nm{position:absolute;bottom:4px;left:0;right:0;font-size:14px;font-weight:800;color:#555}
+    .icons[hidden],.phoneWrap[hidden]{display:none}
+
+    /* ===== 폰 그림 ===== */
+    .phoneWrap{display:flex;justify-content:center}
+    .phone{position:relative;width:min(86vw,340px);aspect-ratio:9/17.6;border-radius:36px;border:9px solid #141414;background:#fff;color:#222;
+      overflow:hidden;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(0,0,0,.45);font-size:13px;text-align:left}
+    .phone.dark{background:#0d0d0f;color:#fff}
+    .phone::before{content:'';position:absolute;top:7px;left:50%;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#141414;z-index:3}
+    .phone .sb{display:flex;justify-content:space-between;align-items:center;padding:6px 18px 2px;font-size:12px;font-weight:700;flex:none}
+    .phone .sb span:last-child{letter-spacing:1px}
+    .phone .body{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+    .phone .nav{display:flex;justify-content:space-around;align-items:center;padding:2px 20px 6px;flex:none}
+    .pb{background:none;border:none;color:inherit;width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:50%;
+      padding:0;position:relative;transition:transform .1s}
+    .pb svg{width:25px;height:25px}
+    .pb:active{transform:scale(.9)}
+    .pb.right{background:rgba(47,191,90,.25);box-shadow:0 0 0 4px #2fbf5a;z-index:2}
+    .pb.wrong{background:rgba(200,16,46,.2);box-shadow:0 0 0 4px var(--red);animation:shake .4s;z-index:2}
+    .pb.glow{animation:glow 1s ease-in-out infinite;z-index:2}
+    .phone.locked .pb{pointer-events:none}
+    @keyframes glow{0%,100%{box-shadow:0 0 0 3px #ffd23f}50%{box-shadow:0 0 0 9px rgba(255,210,63,.35)}}
+    @keyframes shake{0%,100%{transform:none}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+    .row{display:flex;align-items:center}
+    .sp{flex:1}
+    .ln{height:9px;border-radius:5px;background:currentColor;opacity:.13;margin:5px 0}
+
+    /* 첫 화면 */
+    .s-home{background:linear-gradient(170deg,#6a7fd8,#9b6fc6 55%,#e29aa6)!important;color:#fff!important}
+    .s-home .sbar{margin:8px 14px;height:40px;border-radius:20px;background:rgba(255,255,255,.9);color:#666;display:flex;align-items:center;padding:0 4px 0 14px;font-size:13px}
+    .s-home .clock{text-align:center;margin-top:18px}
+    .s-home .clock b{display:block;font-size:52px;font-weight:300;line-height:1}
+    .s-home .apps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 4px;padding:0 10px 10px;margin-top:auto}
+    .app{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:#fff;background:none;border:none;border-radius:14px;padding:3px 0}
+    .app .ic{width:46px;height:46px;border-radius:15px;display:flex;align-items:center;justify-content:center;color:#fff}
+    .app .ic svg{width:26px;height:26px}
+    .app.right{box-shadow:0 0 0 4px #2fbf5a;background:rgba(47,191,90,.3)}
+    .app.wrong{box-shadow:0 0 0 4px var(--red);animation:shake .4s}
+    .app.glow{animation:glow 1s ease-in-out infinite}
+
+    /* 빠른 설정 */
+    .s-quick{background:#1d1f24!important;color:#fff!important}
+    .s-quick .tiles2{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:6px 12px}
+    .tile{display:flex;align-items:center;gap:6px;height:52px;border-radius:18px;background:#4a78d6;color:#fff;border:none;padding:0 10px;font-size:13px;font-weight:700;text-align:left;width:auto}
+    .tile svg{width:22px;height:22px;flex:none}
+    .tile small{display:block;font-size:10px;opacity:.8;font-weight:500}
+    .tile.off{background:#33363d}
+    .s-quick .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:8px 14px;justify-items:center}
+    .s-quick .grid .pb{width:52px;height:52px;background:#33363d}
+    .s-quick .grid .pb.on{background:#4a78d6}
+    .s-quick .bright{display:flex;align-items:center;gap:6px;margin:8px 14px;background:#33363d;border-radius:24px;padding-right:14px}
+    .s-quick .bright .bar{flex:1;height:8px;border-radius:4px;background:linear-gradient(90deg,#fff 55%,#555 55%)}
+    .tile.right,.tile.wrong,.tile.glow{}
+
+    /* 카메라 */
+    .s-cam .view{flex:1;margin:4px 0;background:linear-gradient(180deg,#9fc7ea 0%,#cfe5f4 45%,#7aa86a 46%,#4f7f45 100%);position:relative;overflow:hidden}
+    .s-cam .view::after{content:'';position:absolute;left:18%;bottom:12%;width:110px;height:110px;border-radius:50%;background:radial-gradient(circle,#ffe36e 0 18%,#f27aa0 19% 60%,transparent 61%)}
+    .s-cam .cmodes{display:flex;justify-content:center;gap:14px;font-size:13px;font-weight:700;color:#bbb;padding:6px 0}
+    .s-cam .cmodes .sel{color:#ffd23f}
+    .tab{background:none;border:none;color:#ddd;font-size:13px;font-weight:700;padding:4px 6px;border-radius:10px}
+    .tab.right{box-shadow:0 0 0 3px #2fbf5a}.tab.wrong{box-shadow:0 0 0 3px var(--red);animation:shake .4s}.tab.glow{animation:glow 1s infinite}
+    .s-cam .shut{display:flex;justify-content:space-around;align-items:center;padding:8px 10px 14px}
+    .thumb{width:46px;height:46px;border-radius:50%;border:2px solid #fff;background:radial-gradient(circle,#ffe36e 0 15%,#f27aa0 16% 55%,#5b8a4f 56%)}
+    .thumb.right{box-shadow:0 0 0 4px #2fbf5a}.thumb.wrong{box-shadow:0 0 0 4px var(--red);animation:shake .4s}.thumb.glow{animation:glow 1s infinite}
+    .pb.shutterBtn{width:70px;height:70px}
+    .pb.shutterBtn svg{width:70px;height:70px}
+
+    /* 사진 보기 */
+    .s-photo .pic{flex:1;display:flex;align-items:center;justify-content:center}
+    .s-photo .pic div{width:100%;aspect-ratio:4/3;background:radial-gradient(circle at 50% 50%,#ffe36e 0 9%,#f06d97 10% 34%,#5f9a52 35% 70%,#3f6c37 71%)}
+
+    /* 동영상 */
+    .s-video .player{background:#000;color:#fff;aspect-ratio:16/10;position:relative;display:flex;flex-direction:column}
+    .s-video .player .mid{flex:1;display:flex;justify-content:center;align-items:center;gap:18px}
+    .s-video .player .mid .pb.pp{width:56px;height:56px;background:rgba(255,255,255,.15)}
+    .s-video .prog{height:3px;background:linear-gradient(90deg,#e33 38%,#666 38%);margin:0 8px 2px}
+    .s-video h4{font-size:15px;margin:8px 12px 2px;line-height:1.3}
+    .s-video .ch{font-size:12px;color:#777;margin:0 12px}
+    .chips{display:flex;gap:6px;padding:8px 10px;overflow:hidden}
+    .chip{display:flex;align-items:center;background:#f0f0f0;border-radius:18px;padding-right:10px;font-size:12px;font-weight:700;flex:none}
+    .chip .pb{width:38px;height:38px}
+    .chip .pb svg{width:20px;height:20px}
+    .s-video .list{display:flex;gap:8px;margin:6px 10px}
+    .s-video .list .tn{width:110px;aspect-ratio:16/9;border-radius:8px;background:linear-gradient(135deg,#8cb8e0,#c99bd8);flex:none}
+
+    /* 채팅 */
+    .s-chat{background:#b8cfe0!important}
+    .s-chat .bar{background:#b8cfe0;padding:0 2px}
+    .s-chat .bar b{font-size:15px;margin-left:2px}
+    .s-chat .msgs{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:8px}
+    .bub{max-width:72%;padding:8px 11px;border-radius:14px;background:#fff;font-size:13px;line-height:1.4}
+    .bub.me{align-self:flex-end;background:#fbe66a}
+    .s-chat .inp{background:#fff;display:flex;align-items:center;padding:4px 4px}
+    .s-chat .inp .box{flex:1;background:#f2f2f2;border-radius:18px;height:36px;display:flex;align-items:center;padding-left:12px;color:#999}
+    .s-chat .inp .pb.send{background:#fbe66a;border-radius:12px;width:40px;height:40px}
+
+    /* AI */
+    .s-ai .q1{align-self:flex-end;margin:10px 12px 6px;background:#ececf3;padding:8px 12px;border-radius:16px;font-size:13px}
+    .s-ai .ans{padding:2px 14px}
+    .s-ai .ans p{font-size:13px;line-height:1.5;margin-bottom:4px}
+    .s-ai .ask{margin:auto 10px 8px;border:1.5px solid #ddd;border-radius:24px;padding:8px 6px 4px}
+    .s-ai .ask .ph{color:#999;padding:0 10px 4px;font-size:14px}
+    .s-ai .pb.livebtn{background:#e9edff;border-radius:50%}
+
+    /* 검색 */
+    .s-google .logo{text-align:center;font-size:30px;font-weight:800;color:#5a6be0;margin:34px 0 14px;letter-spacing:2px}
+    .s-google .sbar{margin:0 12px;height:48px;border-radius:24px;background:#f1f3f4;display:flex;align-items:center;padding:0 4px;color:#888}
+    .s-google .sc{display:flex;justify-content:center;gap:14px;margin-top:18px}
+    .s-google .sc .c{display:flex;flex-direction:column;align-items:center;font-size:11px;color:#666;gap:3px}
+    .s-google .sc .pb,.s-google .sc .fake{width:52px;height:52px;border-radius:16px;background:#eef3fd;color:#3b5bd6}
+    .s-google .sc .fake{display:flex;align-items:center;justify-content:center;font-size:22px}
+    .s-google .feed{margin:20px 12px 0}
+
+    /* 지도 */
+    .s-map .map{flex:1;position:relative;background:
+      linear-gradient(90deg,transparent 46%,#fff 46% 50%,transparent 50%),
+      linear-gradient(0deg,transparent 58%,#fff 58% 61%,transparent 61%),
+      linear-gradient(30deg,transparent 70%,#ffe9a8 70% 73%,transparent 73%),
+      radial-gradient(circle at 25% 30%,#bfe3b0 0 18%,transparent 19%),
+      #ecece4}
+    .s-map .msearch{position:absolute;top:8px;left:10px;right:10px;height:42px;border-radius:21px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.2);display:flex;align-items:center;padding:0 4px;color:#888}
+    .s-map .fab{background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);border-radius:12px}
+    .s-map .col{position:absolute;right:10px;display:flex;flex-direction:column;gap:8px}
+    .s-map .pb.go{width:58px;height:58px;background:#2f6fe0;color:#fff;border-radius:50%}
+    .s-map .me{position:absolute;left:47%;top:57%;width:16px;height:16px;border-radius:50%;background:#2f6fe0;border:3px solid #fff;box-shadow:0 0 0 6px rgba(47,111,224,.25)}
+
+    /* 통화 */
+    .s-call{background:linear-gradient(180deg,#24344d,#101722)!important;color:#fff!important}
+    .s-call .who{text-align:center;margin-top:30px}
+    .s-call .who .av{width:86px;height:86px;border-radius:50%;background:#5d7aa3;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:40px}
+    .s-call .who b{font-size:22px;display:block}
+    .s-call .keys{display:grid;grid-template-columns:repeat(3,1fr);gap:16px 6px;justify-items:center;margin:auto 16px 22px}
+    .s-call .keys .pb{width:58px;height:58px;background:rgba(255,255,255,.12)}
+    .s-call .keys .fake{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:12px;opacity:.5}
+    .s-call .pb.end{width:66px;height:66px;background:#e23b3b;margin:0 auto 22px}
+
+    @media (max-height:720px){ .phone{width:min(80vw,300px)} }
+  </style>
+</head>
+<body>
+
+<header class="top">
+  <a class="home" href="index.html#playground"><img src="assets/img/etc/heart.png" alt="">국단비</a>
+  <h1>📱 <span class="long">국단비 놀이터 · </span>이 버튼 뭐지?</h1>
+  <button class="sound" id="soundBtn" aria-label="효과음 켜고 끄기">🔇</button>
+</header>
+
+<main>
+  <div class="info">
+    <div class="box"><div class="label">문제</div><div class="val" id="qno">1<small>/10</small></div></div>
+    <div class="box"><div class="label">앱</div><div class="val" id="cat" style="font-size:17px">기본 화면</div></div>
+    <div class="box"><div class="label">맞힘</div><div class="val" id="right">0</div></div>
+  </div>
+  <div class="card">
+    <span class="mode" id="modeTag"></span>
+    <span class="combo" id="combo"></span>
+    <button class="speak" id="speakBtn" aria-label="읽어 주기">🔈</button>
+    <div id="qicon"></div>
+    <div class="q" id="q"></div>
+    <div class="mean" id="mean" hidden></div>
+  </div>
+  <div class="result" id="result" hidden></div>
+  <button class="hintBtn" id="hintBtn" hidden>💡 힌트 보기</button>
+  <div class="hintTxt" id="hintTxt" hidden></div>
+  <div class="phoneWrap" id="phoneWrap" hidden></div>
+  <div class="choices" id="choices" hidden></div>
+  <div class="icons" id="icons" hidden></div>
+  <button class="next" id="nextBtn" hidden>다음 문제 ▶</button>
+</main>
+
+<div class="layer intro" id="intro">
+  <img src="assets/img/etc/heart.png" alt="국단비 하트">
+  <p class="welcome"><b>국단비 놀이터</b>에<br>오신 것을 환영합니다</p>
+  <span class="skip">화면을 누르면 바로 시작</span>
+</div>
+
+<div class="layer" id="start" hidden>
+  <h2>📱 이 버튼 뭐지?</h2>
+  <p>스마트폰 버튼, 이제 헷갈리지 마세요!<br>그림 속 폰을 <b style="color:#fff">직접 눌러 보며</b> 익힙니다.</p>
+  <div class="modes" id="modes"></div>
+  <div class="cats" id="cats"></div>
+  <label class="auto"><input type="checkbox" id="autoRead"> 자동으로 읽어 주기</label>
+  <button class="big" id="startBtn">시작하기</button>
+  <p class="record" id="record"></p>
+</div>
+
+<div class="layer done" id="done" hidden>
+  <h2 id="doneTitle"></h2>
+  <p id="doneText"></p>
+  <figure class="prize" id="prize" hidden><img id="prizeImg" alt=""><figcaption id="prizeName"></figcaption></figure>
+  <div class="review" id="review"></div>
+  <div class="btns">
+    <button class="big" id="againBtn">한 판 더</button>
+    <button class="ghost" id="modeBtn">처음 화면</button>
+    <a class="ghost" href="index.html#playground">놀이터로</a>
+  </div>
+</div>
+
+<script src="assets/js/flowers.js"></script>
+<script src="assets/js/buttons.js"></script>
+<script>
+/* ===== 설정 ===== */
+const ROUND = 10;            // 한 판 문제 수
+const GIFT_AT = 8;           // 꽃 선물 기준
+const SPEECH_RATE = 0.9;
+const IMG_DIR = 'assets/img/flowers/';
+const MODES = [
+  ['tap', '📱 폰 화면에서 눌러 보기', '그림 속 폰에서 알맞은 버튼을 직접 누릅니다'],
+  ['what', '❓ 이 버튼 뭐지?', '버튼 그림을 보고 이름을 고릅니다'],
+  ['which', '👆 어떤 버튼일까?', '하는 일을 읽고 버튼 그림을 고릅니다'],
+  ['mix', '🎲 섞어서', '세 가지가 골고루 나옵니다'],
+];
+const CATS = ['모두', '기본 화면', '빠른 설정', '카메라', '갤러리', '유튜브', '카카오톡', 'AI·검색', '지도', '전화'];
+const TITLES = [[10, '🎓 버튼 박사'], [8, '🏅 버튼 달인'], [5, '🌱 버튼 새싹'], [0, '💪 다시 도전!']];
+
+/* ===== 폰 화면 그림 =====  B(버튼) — 문제 버튼은 모두 data-b 를 가짐 */
+const B = (id, cls = '') => `<button class="pb ${cls}" data-b="${id}" aria-label="버튼">${ICON[id]}</button>`;
+const SB = '<div class="sb"><span>10:30</span><span>📶 🔋</span></div>';
+const NAV = `<div class="nav">${B('recent')}${B('home')}${B('back')}</div>`;
+const APP = (id, name, color) => `<button class="app" data-b="${id}"><span class="ic" style="background:${color}">${ICON[id]}</span>${name}</button>`;
+const FAKE = (name, color, ch) => `<span class="app" style="pointer-events:none"><span class="ic" style="background:${color};font-size:20px">${ch}</span>${name}</span>`;
+const SCREENS = {
+  home: { cat: '기본 화면', name: '첫 화면', html: () => `<div class="phone s-home">${SB}<div class="body">
+    <div class="sbar"><span class="sp">앱 검색</span>${B('search')}</div>
+    <div class="clock"><b>10:30</b>11월 23일 월요일 ☀</div>
+    <div class="apps">${FAKE('시계', '#4d5d7a', '⏰')}${FAKE('달력', '#e07a3c', '31')}${FAKE('계산기', '#3a9a6a', '±')}${APP('settings', '설정', '#6d7480')}
+      ${APP('phoneapp', '전화', '#3fae5a')}${APP('msgapp', '메시지', '#3c7fe0')}${APP('cameraapp', '카메라', '#e2574c')}${APP('gallery', '갤러리', '#d9548f')}</div>
+    </div>${NAV}</div>` },
+  quick: { cat: '빠른 설정', name: '빠른 설정 창(위에서 아래로 쓸어내림)', html: () => `<div class="phone dark s-quick">${SB}<div class="body">
+    <div class="row" style="padding:2px 8px"><span style="padding-left:6px;font-weight:700">11월 23일 (월)</span><span class="sp"></span>${B('settings')}${B('power')}</div>
+    <div class="tiles2"><button class="tile" data-b="wifi">${ICON.wifi}<span>와이파이<small>집_인터넷</small></span></button>
+      <button class="tile off" data-b="bt">${ICON.bt}<span>블루투스<small>꺼짐</small></span></button></div>
+    <div class="grid">${B('sound', 'on')}${B('rotate')}${B('plane')}${B('torch')}${B('moon')}${B('location', 'on')}${B('hotspot')}<span style="width:52px"></span></div>
+    <div class="bright">${B('brightness')}<div class="bar"></div></div>
+    <div style="margin:8px 14px;background:#2a2d33;border-radius:16px;padding:10px 12px;font-size:12px;color:#bbb">🔔 알림<div class="ln"></div><div class="ln" style="width:60%"></div></div>
+    </div>${NAV}</div>` },
+  camera: { cat: '카메라', name: '카메라', html: () => `<div class="phone dark s-cam">${SB}<div class="body">
+    <div class="row" style="justify-content:space-around;padding:0 6px">${B('settings')}${B('flashcam')}${B('timer')}<span style="font-weight:700">3:4</span></div>
+    <div class="view"></div>
+    <div class="cmodes"><span>인물</span><span class="sel">사진</span><button class="tab" data-b="videotab">동영상</button><span>더보기</span></div>
+    <div class="shut"><button class="thumb" data-b="thumb" aria-label="버튼"></button>${B('shutter', 'shutterBtn')}${B('switchcam')}</div>
+    </div></div>` },
+  photo: { cat: '갤러리', name: '갤러리 — 사진 한 장 보기', html: () => `<div class="phone dark s-photo">${SB}<div class="body">
+    <div class="row" style="padding:0 6px">${B('back')}<span style="font-size:12px;opacity:.8">11월 20일 오후 3:12</span><span class="sp"></span>${B('more')}</div>
+    <div class="pic"><div></div></div>
+    <div class="row" style="justify-content:space-around;padding:6px 0 10px">${B('heart')}${B('edit')}${B('share')}${B('trash')}</div>
+    </div>${NAV}</div>` },
+  video: { cat: '유튜브', name: '유튜브 — 영상 보기', html: () => `<div class="phone s-video">${SB}<div class="body">
+    <div class="player"><div class="row" style="justify-content:flex-end;padding:2px">${B('cc')}${B('settings')}</div>
+      <div class="mid">${B('rew10')}${B('pause', 'pp')}${B('fwd10')}</div>
+      <div class="row" style="padding:0 2px"><span style="font-size:11px;padding-left:8px">3:12 / 8:20</span><span class="sp"></span>${B('fullscreen')}</div>
+      <div class="prog"></div></div>
+    <h4>봄 들꽃 이름 쉽게 외우기</h4><div class="ch">들꽃 사랑 · 조회수 1.2만회</div>
+    <div class="chips"><span class="chip">${B('like')}1.2천</span><span class="chip">${B('share')}공유</span><span class="chip">${B('savelist')}저장</span></div>
+    <div class="list"><div class="tn"></div><div style="flex:1"><div class="ln"></div><div class="ln" style="width:70%"></div></div></div>
+    <div class="list"><div class="tn"></div><div style="flex:1"><div class="ln"></div><div class="ln" style="width:50%"></div></div></div>
+    </div>${NAV}</div>` },
+  chat: { cat: '카카오톡', name: '카카오톡 — 대화방', html: () => `<div class="phone s-chat">${SB}<div class="body">
+    <div class="row bar">${B('back')}<b>큰딸</b><span class="sp"></span>${B('call')}${B('search')}${B('menu')}</div>
+    <div class="msgs"><div class="bub">엄마~ 어제 찍은 꽃 사진 좀 보내 줘요 🌸</div><div class="bub me">알았다. 잠깐만 기다려라</div><div class="bub">네 ㅎㅎ</div></div>
+    <div class="inp">${B('plus')}<div class="box">메시지 입력</div>${B('emoji')}${B('send', 'send')}</div>
+    </div>${NAV}</div>` },
+  ai: { cat: 'AI·검색', name: 'AI 앱(제미나이·챗GPT 등)', html: () => `<div class="phone s-ai">${SB}<div class="body">
+    <div class="row" style="padding:0 4px">${B('menu')}<b style="font-size:15px">AI 도우미</b><span class="sp"></span>${B('newchat')}</div>
+    <div class="q1">봄에 피는 들꽃 알려 줘</div>
+    <div class="ans"><p>봄에 피는 들꽃으로는 제비꽃, 민들레, 할미꽃, 냉이꽃 등이 있어요. 🌼</p><div class="ln"></div><div class="ln" style="width:80%"></div>
+      <div class="row" style="margin-left:-8px">${B('copy')}${B('regen')}</div></div>
+    <div class="ask"><div class="ph">무엇이든 물어보세요</div><div class="row">${B('plus')}<span class="sp"></span>${B('mic')}${B('live', 'livebtn')}</div></div>
+    </div>${NAV}</div>` },
+  google: { cat: 'AI·검색', name: '검색 앱', html: () => `<div class="phone s-google">${SB}<div class="body">
+    <div class="logo">검 색</div>
+    <div class="sbar">${B('search')}<span class="sp">검색어 입력</span>${B('mic')}${B('lens')}</div>
+    <div class="sc"><span class="c">${B('translate')}</span><span class="c"><span class="fake">☀</span></span><span class="c"><span class="fake">📰</span></span><span class="c"><span class="fake">🎵</span></span></div>
+    <div class="feed"><div class="ln"></div><div class="ln" style="width:80%"></div><div style="height:90px;border-radius:12px;background:#e8eef7;margin-top:10px"></div></div>
+    </div>${NAV}</div>` },
+  map: { cat: '지도', name: '지도 앱', html: () => `<div class="phone s-map">${SB}<div class="body"><div class="map">
+    <div class="msearch">${B('search')}<span class="sp">장소·주소 검색</span>${B('mic')}</div>
+    <div class="col" style="top:60px"><span class="fab">${B('layers')}</span></div>
+    <div class="me"></div>
+    <div class="col" style="bottom:90px"><span class="fab">${B('mylocation')}</span><span class="fab" style="display:flex;flex-direction:column">${B('mapplus')}${B('mapminus')}</span></div>
+    <div style="position:absolute;left:10px;bottom:14px" class="fab">${B('star')}</div>
+    <div style="position:absolute;right:10px;bottom:14px">${B('route', 'go')}</div>
+    </div></div>${NAV}</div>` },
+  callscr: { cat: '전화', name: '전화 — 통화 중', html: () => `<div class="phone s-call">${SB}<div class="body">
+    <div class="who"><div class="av">👩</div><b>큰딸</b><span style="opacity:.8">01:42</span></div>
+    <div class="keys">${B('spk')}${B('micoff')}${B('keypad')}${B('videocall')}<span class="fake">녹음</span><span class="fake">추가</span></div>
+    ${B('hangup', 'end')}
+    </div></div>` },
+};
+
+function load(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } }
+function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+let mode = MODES.some(m => m[0] === load('gukdanbi-button-mode', 'tap')) ? load('gukdanbi-button-mode', 'tap') : 'tap';
+let cat = CATS.includes(load('gukdanbi-button-cat', '모두')) ? load('gukdanbi-button-cat', '모두') : '모두';
+let autoRead = load('gukdanbi-button-auto', 'off') === 'on';
+let seen = (() => { try { return JSON.parse(load('gukdanbi-button-seen', '[]')); } catch (e) { return []; } })();
+let best = Number(load('gukdanbi-button-best', 0)) || 0, games = Number(load('gukdanbi-button-games', 0)) || 0;
+
+/* ===== 효과음 ===== */
+let soundOn = load('gukdanbi-sound', 'off') === 'on', actx = null;
+const soundBtn = document.getElementById('soundBtn');
+function showSoundBtn() { soundBtn.textContent = soundOn ? '🔊' : '🔇'; soundBtn.classList.toggle('on', soundOn); }
+showSoundBtn();
+soundBtn.onclick = () => { soundOn = !soundOn; save('gukdanbi-sound', soundOn ? 'on' : 'off'); showSoundBtn(); soundBtn.blur(); if (soundOn) beep('tick'); };
+const SOUNDS = { tick: [[660, .05]], right: [[523, .09], [659, .09], [784, .16]], combo: [[659, .07], [784, .07], [988, .07], [1319, .18]], wrong: [[262, .15, 'triangle'], [220, .22, 'triangle']], done: [[523, .12], [659, .12], [784, .12], [1047, .35]] };
+function beep(name) {
+  if (!soundOn) return;
+  try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state === 'suspended') actx.resume();
+    let t = actx.currentTime;
+    SOUNDS[name].forEach(([f, d, type]) => { const o = actx.createOscillator(), g = actx.createGain(); o.type = type || 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(actx.destination); o.start(t); o.stop(t + d); t += d; });
+  } catch (e) {}
+}
+/* ===== 읽어 주기 ===== */
+const canSpeak = 'speechSynthesis' in window; let koVoice = null;
+function findVoice() { if (canSpeak) koVoice = speechSynthesis.getVoices().find(v => /^ko/i.test(v.lang)) || null; }
+if (canSpeak) { findVoice(); speechSynthesis.onvoiceschanged = findVoice; }
+const speakBtn = document.getElementById('speakBtn');
+function speak(text) { if (!canSpeak) return; speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text.replace(/[「」⋮≡|<>↑−]/g, ' ')); u.lang = 'ko-KR'; u.rate = SPEECH_RATE; if (koVoice) u.voice = koVoice;
+  u.onstart = () => speakBtn.classList.add('on'); u.onend = u.onerror = () => speakBtn.classList.remove('on'); speechSynthesis.speak(u); }
+function stopSpeak() { if (canSpeak) speechSynthesis.cancel(); speakBtn.classList.remove('on'); }
+if (!canSpeak) speakBtn.hidden = true;
+
+/* ===== 문제 만들기 ===== */
+const $ = id => document.getElementById(id);
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const pick1 = a => a[Math.floor(Math.random() * a.length)];
+const INFO = {}; BTN.forEach(([id, c, name, does, tip, noIcon]) => INFO[id] = { id, c, name, does, tip, noIcon: !!noIcon });
+const ICONBTN = BTN.filter(b => !b[5]).map(b => b[0]);
+// 'tap' 문제: TASKS 한 줄 = 한 문제 / 'what'·'which' 문제: 버튼 하나 = 한 문제
+const POOL = {
+  tap: TASKS.map((t, i) => ({ key: 't' + i, type: 'tap', screen: t[0], b: t[1], text: t[2], c: SCREENS[t[0]].cat })),
+  what: ICONBTN.map(id => ({ key: 'w' + id, type: 'what', b: id, c: INFO[id].c })),
+  which: ICONBTN.map(id => ({ key: 'h' + id, type: 'which', b: id, c: INFO[id].c })),
+};
+function poolFor(m) { const p = m === 'mix' ? [...POOL.tap, ...POOL.what, ...POOL.which] : POOL[m]; return p.filter(q => cat === '모두' || q.c === cat); }
+// 보기 3개: 같은 분야 먼저, 그림이 똑같은 버튼(전화·통화 등)은 빼기
+function others(id) {
+  const ok = x => x !== id && ICON[x] !== ICON[id] && INFO[x].name !== INFO[id].name;
+  const same = shuffle(ICONBTN.filter(x => ok(x) && INFO[x].c === INFO[id].c));
+  const rest = shuffle(ICONBTN.filter(x => ok(x) && INFO[x].c !== INFO[id].c));
+  const out = [];
+  for (const x of [...same.slice(0, 2), ...rest, ...same.slice(2)]) { if (out.length >= 3) break; if (!out.some(y => ICON[y] === ICON[x])) out.push(x); }
+  return out;
+}
+
+let qs = [], idx = 0, right = 0, combo = 0, bestCombo = 0, missed = [], cur = null, answered = false, usedHint = false;
+
+function newRound() {
+  $('start').hidden = true; $('done').hidden = true; stopSpeak();
+  const pool = poolFor(mode);
+  let fresh = pool.filter(q => !seen.includes(q.key));
+  if (fresh.length < Math.min(ROUND, pool.length)) { seen = seen.filter(k => !pool.some(q => q.key === k)); fresh = pool; }
+  qs = shuffle(fresh).slice(0, ROUND);
+  idx = 0; right = 0; combo = 0; bestCombo = 0; missed = [];
+  show();
+}
+const TAGS = { tap: '📱 폰에서 눌러 보기', what: '❓ 이 버튼 뭐지?', which: '👆 어떤 버튼일까?' };
+function show() {
+  cur = qs[idx]; answered = false; usedHint = false;
+  const info = INFO[cur.b];
+  $('qno').innerHTML = `${idx + 1}<small>/${qs.length}</small>`; $('right').textContent = right; $('cat').textContent = cur.c;
+  $('modeTag').textContent = TAGS[cur.type];
+  $('mean').hidden = true; $('result').hidden = true; $('nextBtn').hidden = true; $('hintTxt').hidden = true;
+  $('phoneWrap').hidden = $('choices').hidden = $('icons').hidden = true; $('qicon').innerHTML = '';
+  $('hintBtn').hidden = cur.type !== 'tap';
+  if (cur.type === 'tap') {
+    $('q').textContent = cur.text;
+    $('phoneWrap').innerHTML = SCREENS[cur.screen].html(); $('phoneWrap').hidden = false;
+    $('phoneWrap').querySelectorAll('[data-b]').forEach(b => b.onclick = () => choose(b.dataset.b === cur.b, b));
+  } else if (cur.type === 'what') {
+    $('q').textContent = '이 버튼은 무엇일까요?';
+    $('qicon').innerHTML = `<div class="big-icon">${ICON[cur.b]}</div>`;
+    const opts = shuffle([cur.b, ...others(cur.b)]);
+    $('choices').innerHTML = opts.map((id, k) => `<button data-id="${id}"><i>${k + 1}</i>${INFO[id].name}</button>`).join('');
+    [...$('choices').children].forEach(b => b.onclick = () => choose(b.dataset.id === cur.b, b)); $('choices').hidden = false;
+  } else {
+    $('q').textContent = info.does + '. 어떤 버튼일까요?';
+    const opts = shuffle([cur.b, ...others(cur.b)]);
+    $('icons').innerHTML = opts.map((id, k) => `<button data-id="${id}"><i>${k + 1}</i>${ICON[id]}</button>`).join('');
+    [...$('icons').children].forEach(b => b.onclick = () => choose(b.dataset.id === cur.b, b)); $('icons').hidden = false;
+  }
+  window.scrollTo(0, 0);
+  if (autoRead) speak($('q').textContent); else stopSpeak();
+}
+function choose(ok, el) {
+  if (answered) return; answered = true;
+  const info = INFO[cur.b];
+  if (cur.type === 'tap') {
+    $('phoneWrap').firstElementChild.classList.add('locked');
+    const target = $('phoneWrap').querySelector(`[data-b="${cur.b}"]`);
+    // 같은 버튼이 화면에 둘 있으면(예: 마이크) 누른 것을 정답 표시
+    if (ok) el.classList.add('right'); else { el.classList.add('wrong'); setTimeout(() => target.classList.add('glow'), 450); }
+  } else {
+    const box = cur.type === 'what' ? $('choices') : $('icons');
+    [...box.children].forEach(b => { b.disabled = true;
+      if (b.dataset.id === cur.b) b.classList.add('right'); else if (b === el) b.classList.add('wrong'); else b.classList.add('dim');
+      if (cur.type === 'which') b.insertAdjacentHTML('beforeend', `<span class="nm">${INFO[b.dataset.id].name}</span>`); });
+  }
+  const cb = $('combo');
+  if (ok) {
+    right++; if (!usedHint) combo++; bestCombo = Math.max(bestCombo, combo);
+    $('result').className = 'result good';
+    $('result').textContent = combo >= 3 ? `🔥 ${combo}연속 정답! 대단해요` : pick1(['딩동댕! 맞았습니다', '정답입니다! 👏', '바로 그거예요! 👍']);
+    beep(combo >= 3 ? 'combo' : 'right');
+    cb.textContent = combo >= 2 ? `🔥 ${combo}연속` : ''; cb.classList.remove('pop'); void cb.offsetWidth; cb.classList.add('pop');
+  } else {
+    combo = 0; cb.textContent = ''; missed.push(cur);
+    $('result').className = 'result bad';
+    $('result').textContent = cur.type === 'tap' ? '아쉬워요! 노랗게 반짝이는 곳이 정답이에요' : '아쉬워요! 초록 테두리가 정답이에요';
+    beep('wrong');
+  }
+  $('right').textContent = right;
+  $('mean').innerHTML = `<b>${info.name}</b> — ${info.tip}`; $('mean').hidden = false; $('result').hidden = false;
+  $('hintBtn').hidden = true;
+  $('nextBtn').textContent = idx + 1 >= qs.length ? '🌷 결과 보기' : '다음 문제 ▶'; $('nextBtn').hidden = false;
+  if (!seen.includes(cur.key)) { seen.push(cur.key); save('gukdanbi-button-seen', JSON.stringify(seen)); }
+  if (autoRead) speak(info.name + '. ' + info.tip);
+  setTimeout(() => (cur.type === 'tap' ? $('mean') : $('nextBtn')).scrollIntoView({ block: 'nearest', behavior: 'smooth' }), 120);
+}
+$('hintBtn').onclick = () => { usedHint = true; $('hintBtn').hidden = true;
+  $('hintTxt').textContent = `💡 「${INFO[cur.b].name}」 버튼을 찾아보세요`; $('hintTxt').hidden = false; if (autoRead) speak($('hintTxt').textContent); };
+$('nextBtn').onclick = () => { stopSpeak(); idx++; idx >= qs.length ? finish() : show(); };
+speakBtn.onclick = () => speak(answered ? INFO[cur.b].name + '. ' + INFO[cur.b].tip : $('q').textContent);
+
+function finish() {
+  const n = qs.length; games++; save('gukdanbi-button-games', games);
+  if (right > best) { best = right; save('gukdanbi-button-best', best); }
+  const title = TITLES.find(t => right >= t[0] * n / 10)[1];
+  $('doneTitle').textContent = title;
+  $('doneText').innerHTML = `${n}문제 중 <b>${right}개</b> 맞힘` + (bestCombo >= 3 ? ` · 🔥 최고 ${bestCombo}연속` : '') + '<br>' + (right >= GIFT_AT ? '' : `${GIFT_AT}개 이상 맞히면 꽃 선물을 드려요`);
+  if (right >= GIFT_AT && typeof FLOWERS !== 'undefined' && FLOWERS.length) {
+    const g = pick1(FLOWERS); $('prizeImg').src = IMG_DIR + g.file; $('prizeImg').alt = g.name;
+    $('prizeName').textContent = '🎁 국단비님의 선물 · 🌸 ' + g.name; $('prize').hidden = false;
+  } else $('prize').hidden = true;
+  $('review').innerHTML = missed.length ? '<h3>📱 다시 보기</h3>' + missed.map(q => { const i = INFO[q.b];
+    return `<div class="rv"><span class="pic" style="width:64px;color:#222">${i.noIcon ? '' : `<span style="display:inline-flex;width:54px;height:54px">${ICON[q.b]}</span>`}</span><span><b>${i.name}</b>${q.type === 'tap' ? `<span>문제: ${q.text}</span>` : ''}<span>${i.tip}</span></span></div>`; }).join('') : '';
+  $('done').hidden = false; $('done').scrollTop = 0; beep('done');
+}
+$('againBtn').onclick = newRound;
+$('modeBtn').onclick = () => { $('done').hidden = true; showStart(); };
+
+function showStart() {
+  stopSpeak();
+  $('modes').innerHTML = MODES.map(([k, t, d]) => `<button data-m="${k}"${k === mode ? ' class="on"' : ''}>${t}<small>${d}</small></button>`).join('');
+  [...$('modes').children].forEach(b => b.onclick = () => { mode = b.dataset.m; save('gukdanbi-button-mode', mode); showStart(); });
+  $('cats').innerHTML = CATS.map(c => { const n = (c === '모두' ? poolFor(mode) : (() => { const keep = cat; cat = c; const r = poolFor(mode); cat = keep; return r; })()).length;
+    return n ? `<button data-c="${c}"${c === cat ? ' class="on"' : ''}>${c === '모두' ? '모두 섞기' : c} <small>${n}</small></button>` : ''; }).join('');
+  [...$('cats').children].forEach(b => b.onclick = () => { cat = b.dataset.c; save('gukdanbi-button-cat', cat); showStart(); });
+  $('autoRead').checked = autoRead; $('autoRead').parentElement.hidden = !canSpeak;
+  $('record').textContent = games ? `지금까지 ${games}판 · 최고 ${best}개 맞힘` : `버튼 ${BTN.length}가지 · 문제 ${POOL.tap.length + POOL.what.length + POOL.which.length}개`;
+  $('start').hidden = false;
+}
+$('autoRead').onchange = e => { autoRead = e.target.checked; save('gukdanbi-button-auto', autoRead ? 'on' : 'off'); };
+$('startBtn').onclick = newRound;
+document.addEventListener('visibilitychange', () => { if (document.hidden) stopSpeak(); });
+
+const intro = $('intro'); let introDone = false;
+function endIntro() { if (introDone) return; introDone = true; intro.classList.add('out'); setTimeout(() => { intro.hidden = true; showStart(); }, 450); }
+intro.onclick = endIntro; setTimeout(endIntro, 3500);
+document.addEventListener('keydown', e => {
+  if (!introDone) { if (e.key === 'Enter' || e.key === ' ') endIntro(); return; }
+  if (!$('start').hidden || !$('done').hidden) { if (e.key === 'Enter') (!$('start').hidden ? $('startBtn') : $('againBtn')).click(); return; }
+  const box = !$('choices').hidden ? $('choices') : !$('icons').hidden ? $('icons') : null;
+  if (box && '1234'.includes(e.key)) { const b = box.children[Number(e.key) - 1]; if (b) b.click(); }
+  else if (e.key === 'Enter' && !$('nextBtn').hidden) { e.preventDefault(); $('nextBtn').click(); }
+});
+</script>
+<script src="assets/js/app.js"></script>
+</body>
+</html>
