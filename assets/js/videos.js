@@ -2,7 +2,7 @@
 // 유튜브 주소에서 youtu.be/ 뒤(또는 v= 뒤)의 11글자가 영상 ID입니다.
 
 // 대표 뮤직비디오 — 이 11글자만 바꾸면 큰 스크린 영상이 바뀝니다
-const FEATURED = "SsqXZBndvfk";
+const FEATURED = "qDFtDJXYziM";
 
 
 // 첫째 줄: 뮤직비디오 필름 띠 — 추가할 때 한 줄을 더하고, 빼려면 그 줄을 지우면 됩니다
